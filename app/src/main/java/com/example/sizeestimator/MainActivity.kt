@@ -2,7 +2,10 @@ package com.example.sizeestimator
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -20,12 +23,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.sizeestimator.databinding.ActivityMainBinding
-import com.example.sizeestimator.ui.theme.SizeEstimatorTheme
+import java.io.IOException
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -78,6 +79,26 @@ class MainActivity : ComponentActivity() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+
+//        val imageFile = File ("/storage/emulated/0/Download/photo.png")
+//        val drawableId = this.resources.getIdentifier("test_size_estimate.jpg", "drawable", packageName)
+        val bitmap = getBitmapFromAsset(this, "test_size_estimate.jpg")
+
+        println("** bitmap = $bitmap. bitmap width = ${bitmap?.width} and height = ${bitmap?.height}")
+    }
+
+    private fun getBitmapFromAsset(context: Context, filePath: String) : Bitmap? {
+        val assetManager = context.assets
+
+        var istr : InputStream? = null
+        var bitmap: Bitmap? = null
+        try {
+            istr = assetManager.open(filePath)
+            bitmap = BitmapFactory.decodeStream(istr)
+        } catch (iox : IOException) {
+            println("** birtmap reading excception: $iox")
+        }
+        return bitmap
     }
 
     private fun takePhoto() {
