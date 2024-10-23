@@ -6,14 +6,22 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.DashPathEffect
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment.DIRECTORY_PICTURES
+import android.os.Environment.getExternalStoragePublicDirectory
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -24,13 +32,21 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.alpha
 import com.example.sizeestimator.databinding.ActivityMainBinding
+import com.example.sizeestimator.ml.SsdMobilenetV1
+import org.tensorflow.lite.support.image.TensorImage
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
@@ -61,6 +77,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -80,23 +97,129 @@ class MainActivity : ComponentActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
 
-//        val imageFile = File ("/storage/emulated/0/Download/photo.png")
-//        val drawableId = this.resources.getIdentifier("test_size_estimate.jpg", "drawable", packageName)
-        val bitmap = getBitmapFromAsset(this, "test_size_estimate.jpg")
+        val immutablebitmap = getBitmapFromAsset(this, "test_4.jpg")
+        println("** bitmap = $immutablebitmap. bitmap width = ${immutablebitmap?.width} and height = ${immutablebitmap?.height}")
 
-        println("** bitmap = $bitmap. bitmap width = ${bitmap?.width} and height = ${bitmap?.height}")
+        val model = SsdMobilenetV1.newInstance(this)
+        val image = TensorImage.fromBitmap(immutablebitmap)
+        val outputs = model.process(image)
+
+        val rectPaint = Paint()
+        rectPaint.style = Paint.Style.STROKE
+        rectPaint.strokeWidth = 2F
+        rectPaint.isAntiAlias = false
+        //rectPaint.pathEffect = DashPathEffect(floatArrayOf(4F, 1F), 1F)
+
+        val textPaint = Paint()
+        textPaint.textSize = 14F
+        textPaint.typeface = Typeface.MONOSPACE
+        textPaint.strokeWidth = 2F
+
+        val legendPaint = Paint()
+        legendPaint.style = Paint.Style.FILL
+        legendPaint.strokeWidth = 2F
+
+        val legendFillPaint = Paint()
+        legendFillPaint.style = Paint.Style.FILL
+        legendFillPaint.color = Color.parseColor("#50FFFFFF")
+
+        println("** ----------------------------------- **")
+        println("** number of detection results = ${outputs.detectionResultList.size}")
+
+        if (immutablebitmap != null) {
+            val mutableBitmap = Bitmap.createBitmap(
+                immutablebitmap.width,
+                immutablebitmap.height,
+                Bitmap.Config.RGB_565
+            )
+            val canvas = Canvas(mutableBitmap)
+            canvas.drawBitmap(immutablebitmap, 0F, 0F, rectPaint)
+
+            val descendingScores =
+                outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
+
+            descendingScores.forEachIndexed { index: Int, result ->
+                // draw rectangle
+                println("** result[$index] = $result")
+                println("**    category = $")
+                println("**    location as rectangle = ${result.locationAsRectF}")
+                println("**    score = ${result.scoreAsFloat}")
+                rectPaint.color = RECT_COLORS[index]
+                canvas.drawRect(result.locationAsRectF, rectPaint)
+            }
+
+//            canvas.drawRect(
+//                android.graphics.Rect(10, 10, 120, descendingScores.size * 20),
+//                    legendFillPaint)
+
+
+            // Draw the key
+            descendingScores.forEachIndexed { index:Int, result ->
+                // legend entry
+                legendPaint.color = RECT_COLORS[index]
+                canvas.drawRect(
+                    android.graphics.Rect(
+                        10,
+                        10 + (index * 20),
+                        20,
+                        20 + (index * 20)
+                    ),
+                    legendPaint
+                )
+
+                textPaint.color = RECT_COLORS[index]
+                canvas.drawText(
+                    result.scoreAsFloat.toString(),
+                    25F,
+                    20F + (index * 20),
+                    textPaint
+                )
+            }
+
+            saveBitmap(mutableBitmap)
+
+        }
+
+        model.close()
     }
 
-    private fun getBitmapFromAsset(context: Context, filePath: String) : Bitmap? {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun saveBitmap(bitmapImage: Bitmap) {
+        if (!ANALYSED_IMAGE_DIR.exists()) {
+            ANALYSED_IMAGE_DIR.mkdir()
+        }
+
+        val path = ANALYSED_IMAGE_DIR.absolutePath +
+                File.separator +
+                LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("dd MMM yyyy hh-mm-ss a A")
+                ) +
+                ".jpg"
+
+        println("** About to write to file: $path")
+
+        try {
+            val fileOutputStream = FileOutputStream(path)
+            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
+            fileOutputStream.close()
+
+            println("** Wrote OK to file $path")
+
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getBitmapFromAsset(context: Context, filePath: String): Bitmap? {
         val assetManager = context.assets
 
-        var istr : InputStream? = null
+        var istr: InputStream? = null
         var bitmap: Bitmap? = null
         try {
             istr = assetManager.open(filePath)
             bitmap = BitmapFactory.decodeStream(istr)
-        } catch (iox : IOException) {
-            println("** birtmap reading excception: $iox")
+        } catch (iox: IOException) {
+            println("** bitmap reading exception: $iox")
         }
         return bitmap
     }
@@ -190,7 +313,7 @@ class MainActivity : ComponentActivity() {
 
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture, imageAnalyzer
+                    this, cameraSelector, preview, imageCapture,// imageAnalyzer
                 )
 
             } catch (exc: Exception) {
@@ -225,5 +348,25 @@ class MainActivity : ComponentActivity() {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }.toTypedArray()
+
+        val ANALYSED_IMAGE_DIR = File(
+            getExternalStoragePublicDirectory(DIRECTORY_PICTURES).absolutePath
+                    + File.separator
+                    + "My Fit Pro"
+        )
+        val RECT_COLORS: List<Int> =
+            listOf(
+                Color.RED,
+                Color.YELLOW,
+                Color.BLUE,
+                Color.CYAN,
+                Color.BLACK,
+                Color.DKGRAY,
+                Color.GRAY,
+                Color.GREEN,
+                Color.LTGRAY,
+                Color.MAGENTA
+            )
+
     }
 }
