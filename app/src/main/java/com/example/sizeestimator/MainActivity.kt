@@ -81,13 +81,15 @@ class MainActivity : ComponentActivity() {
 
         // Create time stamped name and MediaStore entry.
         try {
-            val tempFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "hires.jpg"
+            val tempFilePath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
+            Log.d(TAG, "tempFilePath = $tempFilePath")
+
             val tempFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
                 File(tempFilePath)
             ).build()
 
-            if (!ANALYSED_IMAGE_DIR.exists()) {
-                ANALYSED_IMAGE_DIR.mkdir()
+            if (!application.cacheDir.exists()) {
+                applicationContext.cacheDir.mkdir()
             }
 
             // Set up image capture listener, which is triggered after photo has
@@ -124,7 +126,7 @@ class MainActivity : ComponentActivity() {
                             loresBitmap.markup(result)
 
                             // Save bitmap
-                            loresBitmap.save(ANALYSED_IMAGE_DIR, "lores.jpg")
+                            loresBitmap.save(applicationContext.cacheDir, LORES_FILENAME)
 
                             // Put result on screen
                             viewBinding.textView.text =
@@ -199,11 +201,7 @@ class MainActivity : ComponentActivity() {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }.toTypedArray()
-
-        val ANALYSED_IMAGE_DIR = File(
-            getExternalStoragePublicDirectory(DIRECTORY_PICTURES).absolutePath
-                    + File.separator
-                    + "SizeEstimator"
-        )
+        private const val HIRES_FILENAME = "hires.jpg"
+        private const val LORES_FILENAME = "lores.jpg"
     }
 }
