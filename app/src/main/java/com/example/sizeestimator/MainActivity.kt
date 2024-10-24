@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
         return AnalysisResult(outputs, referenceObjectIndex, targetObjectIndex, targetObjectSize)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun markupImageFile(imageFile: File, analysisResult: AnalysisResult) {
         val rectPaint = Paint()
         rectPaint.style = Paint.Style.STROKE
@@ -321,6 +322,10 @@ class MainActivity : ComponentActivity() {
                 File(tempFilePath)
             ).build()
 
+            if (!ANALYSED_IMAGE_DIR.exists()) {
+                ANALYSED_IMAGE_DIR.mkdir()
+            }
+
             // Set up image capture listener, which is triggered after photo has
             // been taken
             imageCapture.takePicture(
@@ -334,9 +339,6 @@ class MainActivity : ComponentActivity() {
                     @RequiresApi(Build.VERSION_CODES.O)
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val tempFile = File(tempFilePath)
-
-//                        val exif = Exif.createFromFile(tempFile)
-//                        Log.d(TAG, "** exif = $exif")
 
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
@@ -354,7 +356,7 @@ class MainActivity : ComponentActivity() {
                 }
             )
         } catch (ie: RuntimeException) {
-            println("** ie = $ie")
+            Log.w(TAG, ie)
         }
     }
 
