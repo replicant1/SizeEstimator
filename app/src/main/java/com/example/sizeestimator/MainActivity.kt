@@ -93,7 +93,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * @param imageFile 300 x 300 pixel image ready to analyse with TensorFlow model.
+     * @param imageFile Image ready to analyse with TensorFlow model. Assumed dimensions
+     * are TENSOR_FLOW_IMAGE_WIDTH_PX x TENSOR_FLOW_IMAGE_HEIGHT_PX.
      */
     private fun analyseImageFile(imageFile: File): AnalysisResult {
         val bitmapToAnalyse = BitmapFactory.decodeFile(imageFile.absolutePath)
@@ -159,7 +160,6 @@ class MainActivity : ComponentActivity() {
         }
 
         if ((analysisResult.referenceObjectIndex != -1) && (analysisResult.targetObjectIndex != -1)) {
-            println("** Calculating target object size **")
             calculateTargetObjectSize(
                 descendingScores,
                 analysisResult.referenceObjectIndex,
@@ -168,10 +168,6 @@ class MainActivity : ComponentActivity() {
         }
 
         descendingScores.forEachIndexed { index: Int, result ->
-            println("** result[$index] = $result")
-            println("**    category = $")
-            println("**    location as rectangle = ${result.locationAsRectF}")
-            println("**    score = ${result.scoreAsFloat}")
             if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
                 rectPaint.pathEffect = null
             } else {
@@ -206,6 +202,9 @@ class MainActivity : ComponentActivity() {
         saveBitmapToUniqueFilename(mutableBitmap)
     }
 
+    /**
+     * @return Size of target object as (width, height) in millimetres
+     */
     private fun calculateTargetObjectSize(
         sortedResults: List<SsdMobilenetV1.DetectionResult>,
         referenceObjectIndex: Int,
@@ -220,14 +219,9 @@ class MainActivity : ComponentActivity() {
         val actualTargetObjectWidthMm = targetObjectResult.locationAsRectF.width() * mmPerPixel
         val actualTargetObjectHeightMm = targetObjectResult.locationAsRectF.height() * mmPerPixel
 
-        println("** referenceObjectResult = $referenceObjectResult")
-        println("** targetObjectResult = $targetObjectResult")
-
-        println("** referenceObjectWidthPx = $referenceObjectWidthPx")
-        println("** mmPerPixel = $mmPerPixel")
-
-        println("** actualTargetObjectWidthMm = $actualTargetObjectWidthMm")
-        println("** actualTargetObjectHeightMm = $actualTargetObjectHeightMm")
+        Log.d(TAG, "Pixel width of reference object = $referenceObjectWidthPx")
+        Log.d(TAG, "Scale factor mmPerPixel = $mmPerPixel")
+        Log.d(TAG, "Actual target object size (mm): width = $actualTargetObjectWidthMm, height = $actualTargetObjectHeightMm")
 
         return Pair(actualTargetObjectWidthMm.toLong(), actualTargetObjectHeightMm.toLong())
     }
@@ -348,7 +342,7 @@ class MainActivity : ComponentActivity() {
 
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
-                        Log.d(TAG, "About to crop photo to 300x300")
+                        Log.d(TAG, "About to crop photo to size expected by tensor flow model")
                         val analysableBitmapFile = cropAndScaleBitmapToAnalysableSize(tempFile)
 
                         if (analysableBitmapFile != null) {
@@ -357,6 +351,11 @@ class MainActivity : ComponentActivity() {
 
                             Log.d(TAG, "About to mark up cropped image")
                             markupImageFile(analysableBitmapFile, results)
+
+                            // Put result on screen
+                            viewBinding.textView.text = "Size: ${results.targetObjectSizeMillimetres.first} x ${results.targetObjectSizeMillimetres.second} mm"
+                        } else {
+                            Log.d(TAG, "Failed to crop photo to size expected by tensor flow model")
                         }
                     }
                 }
@@ -384,8 +383,9 @@ class MainActivity : ComponentActivity() {
 
         Log.d(TAG, "Squared bitmap has height = ${squaredBitmap.height}, width = ${squaredBitmap.width}")
 
-        // Scale down to 300x300 for use by TensorFlow model
-        val scaledSquareBitmap = Bitmap.createScaledBitmap(squaredBitmap, 300, 300, false)
+        // Scale down to size expected by TensorFlow model
+        val scaledSquareBitmap = Bitmap.createScaledBitmap(
+            squaredBitmap, TENSOR_FLOW_IMAGE_WIDTH_PX, TENSOR_FLOW_IMAGE_HEIGHT_PX, false)
         Log.d(TAG, "Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}")
 
         // Save the cropped and scaled bitmap
@@ -449,6 +449,8 @@ class MainActivity : ComponentActivity() {
     companion object {
         private val TAG = MainActivity::class.java.simpleName
         private const val REFERENCE_OBJECT_WIDTH_MM = 123F
+        private const val TENSOR_FLOW_IMAGE_WIDTH_PX = 300
+        private const val TENSOR_FLOW_IMAGE_HEIGHT_PX = 300
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUIRED_PERMISSIONS =
             mutableListOf(

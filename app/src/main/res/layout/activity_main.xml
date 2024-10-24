@@ -39,7 +39,7 @@
         android:layout_width="wrap_content"
         android:background="@color/white"
         android:padding="10dp"
-        android:text="Size: 201 x 210 mm"
+        android:text="Size:"
         android:textStyle="bold"
         android:textSize="18sp"
         android:layout_marginBottom="50dp"
