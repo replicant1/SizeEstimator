@@ -22,6 +22,7 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
+import com.example.sizeestimator.LoresBitmap.AnalysisOptions
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
@@ -85,9 +86,8 @@ class MainActivity : ComponentActivity() {
         try {
             val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis())
-            println("** name = $name")
 
-            val tempFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "temp.jpg"
+            val tempFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "hires.jpg"
             val tempFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
                 File(tempFilePath)
             ).build()
@@ -114,22 +114,29 @@ class MainActivity : ComponentActivity() {
 
                         Log.d(TAG, "About to crop photo to size expected by tensor flow model")
                         val cameraImage = BitmapFactory.decodeFile(tempFilePath)
-                        Log.d(TAG, "Camera image: width=${cameraImage.width}, height=${cameraImage.height}")
+                        Log.d(
+                            TAG,
+                            "Camera image: width=${cameraImage.width}, height=${cameraImage.height}"
+                        )
 
-                        val loresBitmap = LoresBitmap.fromCameraBitmap(cameraImage)
+                        val loresBitmap = LoresBitmap.fromHiresBitmap(cameraImage)
 
                         if (loresBitmap != null) {
-                            Log.d(TAG, "About to analyse the cropped and scaled image")
-                            val result = loresBitmap.analyse(this@MainActivity)
+                            Log.d(TAG, "Analysing the lores image")
+                            val result = loresBitmap.analyse(
+                                this@MainActivity,
+                                AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F)
+                            )
 
-                            Log.d(TAG, "About to mark up cropped image")
+                            Log.d(TAG, "About to mark up lores image")
                             loresBitmap.markup(result)
 
                             // Save bitmap
-                            loresBitmap.save(ANALYSED_IMAGE_DIR, "bob.jpg")
+                            loresBitmap.save(ANALYSED_IMAGE_DIR, "lores.jpg")
 
                             // Put result on screen
-                            viewBinding.textView.text = "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
+                            viewBinding.textView.text =
+                                "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
                         } else {
                             Log.d(TAG, "Failed to crop photo to size expected by tensor flow model")
                         }

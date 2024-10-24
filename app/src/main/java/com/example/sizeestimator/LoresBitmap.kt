@@ -3,6 +3,7 @@ package com.example.sizeestimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -10,27 +11,24 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import com.example.sizeestimator.AnalysableBitmapFile.Companion.RECT_COLORS
-import com.example.sizeestimator.MainActivity.Companion.ANALYSED_IMAGE_DIR
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 import java.io.File
 import java.io.FileOutputStream
 
-class LoresBitmap(var smallBitmap : Bitmap) {
+class LoresBitmap(private var loresBitmap : Bitmap) {
 
-    /**
-     * @param context application context
-     */
-    fun analyse(context: Context): AnalysisResult {
+    data class AnalysisOptions(val minTop: Float)
+
+    fun analyse(context: Context, options : AnalysisOptions): AnalysisResult {
         val model = SsdMobilenetV1.newInstance(context)
-        val image = TensorImage.fromBitmap(smallBitmap)
+        val image = TensorImage.fromBitmap(loresBitmap)
         val outputs = model.process(image)
-        val analyser = Analyser(outputs.detectionResultList, 150F)
+        val analyser = Analyser(outputs.detectionResultList)
 
         model.close()
 
-        return analyser.analyse()
+        return analyser.analyse(options)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -49,16 +47,15 @@ class LoresBitmap(var smallBitmap : Bitmap) {
         legendPaint.style = Paint.Style.FILL
         legendPaint.strokeWidth = 2F
 
-//        val immutableBitmap = BitmapFactory.decodeFile(bitmapFile.absolutePath)
         val mutableBitmap = Bitmap.createBitmap(
-            smallBitmap.width,
-            smallBitmap.height,
+            loresBitmap.width,
+            loresBitmap.height,
             Bitmap.Config.RGB_565
         )
         val canvas = Canvas(mutableBitmap)
 
         // Copy mutable bitmap to the canvas so that we can draw on top of it
-        canvas.drawBitmap(smallBitmap, 0F, 0F, rectPaint)
+        canvas.drawBitmap(loresBitmap, 0F, 0F, rectPaint)
 
         analysisResult.sortedResults.forEachIndexed { index: Int, result ->
             if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
@@ -66,13 +63,13 @@ class LoresBitmap(var smallBitmap : Bitmap) {
             } else {
                 rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
             }
-            rectPaint.color = RECT_COLORS[index % RECT_COLORS.size]
+            rectPaint.color = LEGEND_COLORS[index % LEGEND_COLORS.size]
             canvas.drawRect(result.locationAsRectF, rectPaint)
         }
 
         // Draw the legend at top left of the image
         analysisResult.sortedResults.forEachIndexed { index: Int, result ->
-            legendPaint.color = RECT_COLORS[index]
+            legendPaint.color = LEGEND_COLORS[index]
             canvas.drawRect(
                 android.graphics.Rect(
                     10,
@@ -83,7 +80,7 @@ class LoresBitmap(var smallBitmap : Bitmap) {
                 legendPaint
             )
 
-            textPaint.color = RECT_COLORS[index]
+            textPaint.color = LEGEND_COLORS[index]
             canvas.drawText(
                 result.scoreAsFloat.toString(),
                 25F,
@@ -91,7 +88,7 @@ class LoresBitmap(var smallBitmap : Bitmap) {
                 textPaint
             )
         }
-        smallBitmap = mutableBitmap
+        loresBitmap = mutableBitmap
     }
 
     /**
@@ -104,52 +101,48 @@ class LoresBitmap(var smallBitmap : Bitmap) {
             dir.mkdir()
         }
 
-
-        val path = dir.absolutePath +
-                File.separator +
-                filename
+        val path = dir.absolutePath + File.separator + filename
 
         Log.d(TAG, "About to save bitmap to file: $path")
 
         try {
             val fileOutputStream = FileOutputStream(path)
-            smallBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
+            loresBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
             fileOutputStream.close()
 
             Log.d(TAG, "Wrote bitmap OK to file $path")
 
         } catch (e: java.lang.Exception) {
-            e.printStackTrace()
+            Log.w(TAG, e)
         }
     }
 
     companion object {
-        fun fromCameraBitmap(rawBitmap: Bitmap): LoresBitmap? {
-//        val rawBitmap = BitmapFactory.decodeFile(cameraBitmapFile.absolutePath)
+        fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap? {
             Log.d(
                 TAG,
-                "Cropping bitmap of width = ${rawBitmap.width}, height = ${rawBitmap.height}"
+                "Cropping bitmap of width = ${hiresBitmap.width}, height = ${hiresBitmap.height}"
             )
 
             // Cropping this much off width should make image square
             // NOTE: Assuming width > height
-            val horizontalCrop = (rawBitmap.width - rawBitmap.height) / 2
+            val horizontalCrop = (hiresBitmap.width - hiresBitmap.height) / 2
             val squaredBitmap = Bitmap.createBitmap(
-                rawBitmap,
+                hiresBitmap,
                 horizontalCrop,
                 0,
-                rawBitmap.height,
-                rawBitmap.height
+                hiresBitmap.height,
+                hiresBitmap.height
             )
 
             Log.d(
                 TAG,
-                "Squared bitmap has height = ${squaredBitmap.height}, width = ${squaredBitmap.width}"
+                "Squared bitmap has width = ${squaredBitmap.width}, height = ${squaredBitmap.height}"
             )
 
             // Scale down to size expected by TensorFlow model
             val scaledSquareBitmap = Bitmap.createScaledBitmap(
-                squaredBitmap, TENSOR_FLOW_IMAGE_SIZE_PX, TENSOR_FLOW_IMAGE_SIZE_PX, false
+                squaredBitmap, LORES_IMAGE_SIZE_PX, LORES_IMAGE_SIZE_PX, false
             )
             Log.d(
                 TAG,
@@ -160,6 +153,19 @@ class LoresBitmap(var smallBitmap : Bitmap) {
         }
 
         private val TAG = LoresBitmap::class.java.simpleName
-        private const val TENSOR_FLOW_IMAGE_SIZE_PX = 300
+         const val LORES_IMAGE_SIZE_PX = 300
+        val LEGEND_COLORS: List<Int> =
+            listOf(
+                Color.RED,
+                Color.YELLOW,
+                Color.BLUE,
+                Color.CYAN,
+                Color.BLACK,
+                Color.DKGRAY,
+                Color.GRAY,
+                Color.GREEN,
+                Color.LTGRAY,
+                Color.MAGENTA
+            )
     }
 }

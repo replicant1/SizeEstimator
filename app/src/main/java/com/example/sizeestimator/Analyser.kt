@@ -6,16 +6,15 @@ import com.example.sizeestimator.ml.SsdMobilenetV1
 
 /**
  * @param results output of the Tensor Flow model - bounding boxes with scores
- * @param minTop Reference object must have bounding box below this in the 300x300 image
  */
-class Analyser(results: List<SsdMobilenetV1.DetectionResult>, val minTop: Float) {
+class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
     private val sortedResults = results.sortedByDescending { it.scoreAsFloat }
 
     /**
      * Analyse the Tensor Flow results provided to constructor.
      */
-    fun analyse(): AnalysisResult {
-        val referenceObjectIndex = findReferenceObject(minTop)
+    fun analyse(options:LoresBitmap.AnalysisOptions): AnalysisResult {
+        val referenceObjectIndex = findReferenceObject(options.minTop)
         val targetObjectIndex = findTargetObject(referenceObjectIndex)
         val targetObjectSizeMillimetres =
             calculateTargetObjectSize(referenceObjectIndex, targetObjectIndex)
