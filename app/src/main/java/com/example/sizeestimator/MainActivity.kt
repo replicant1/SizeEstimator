@@ -192,15 +192,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private val TAG = MainActivity::class.java.simpleName
-        private val REQUIRED_PERMISSIONS =
-            mutableListOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            ).apply {
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }.toTypedArray()
+        private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA,).toTypedArray()
         private const val HIRES_FILENAME = "hires.jpg"
         private const val LORES_FILENAME = "lores.jpg"
     }
