@@ -63,6 +63,6 @@ The algorithm above can be visualized by looking at the following samples. The a
 
 ## Sample 4
 
-![Cropped](/doc/sample3/cropped.jpg)
-![Markedup](/doc/sample3/marked_up.jpg)
+![Cropped](/doc/sample4/cropped.jpg)
+![Markedup](/doc/sample4/marked_up.jpg)
 
