@@ -10,7 +10,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import com.example.sizeestimator.AnalysableBitmapFile.Companion
 import com.example.sizeestimator.AnalysableBitmapFile.Companion.RECT_COLORS
 import com.example.sizeestimator.MainActivity.Companion.ANALYSED_IMAGE_DIR
 import com.example.sizeestimator.ml.SsdMobilenetV1
@@ -19,8 +18,6 @@ import java.io.File
 import java.io.FileOutputStream
 
 class LoresBitmap(var smallBitmap : Bitmap) {
-
-//    private var bitmap: Bitmap = Bitmap.createBitmap(300, 300, Bitmap.Config.RGB_565)
 
     /**
      * @param context application context
@@ -102,18 +99,15 @@ class LoresBitmap(var smallBitmap : Bitmap) {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    fun save(name: String) {
-        if (!ANALYSED_IMAGE_DIR.exists()) {
-            ANALYSED_IMAGE_DIR.mkdir()
+    fun save(dir : File, filename: String) {
+        if (!dir.exists()) {
+            dir.mkdir()
         }
 
-        val path = ANALYSED_IMAGE_DIR.absolutePath +
+
+        val path = dir.absolutePath +
                 File.separator +
-                name
-//                    LocalDateTime.now().format(
-//                        DateTimeFormatter.ofPattern("dd MMM yyyy hh-mm-ss a A")
-//                    ) +
-//                "bob.jpg"
+                filename
 
         Log.d(TAG, "About to save bitmap to file: $path")
 

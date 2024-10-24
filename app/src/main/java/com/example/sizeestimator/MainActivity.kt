@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
                             loresBitmap.markup(result)
 
                             // Save bitmap
-                            loresBitmap.save("bob.jpg")
+                            loresBitmap.save(ANALYSED_IMAGE_DIR, "bob.jpg")
 
                             // Put result on screen
                             viewBinding.textView.text = "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
