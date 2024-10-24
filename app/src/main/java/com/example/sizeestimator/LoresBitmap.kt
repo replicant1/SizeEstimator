@@ -7,20 +7,22 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 import java.io.File
 import java.io.FileOutputStream
 
-class LoresBitmap(private var loresBitmap : Bitmap) {
+/**
+ * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
+ * for the Tensor Flow model to process.
+ */
+class LoresBitmap(private var loresBitmap: Bitmap) {
 
     data class AnalysisOptions(val minTop: Float)
 
-    fun analyse(context: Context, options : AnalysisOptions): AnalysisResult {
+    fun analyse(context: Context, options: AnalysisOptions): AnalysisResult {
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(loresBitmap)
         val outputs = model.process(image)
@@ -31,7 +33,10 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
         return analyser.analyse(options)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    /**
+     * Draw bounding boxes, scores and a legend on this [LoresBitmap] that visualizes
+     * the given [analysisResult].
+     */
     fun markup(analysisResult: AnalysisResult) {
         val rectPaint = Paint()
         rectPaint.style = Paint.Style.STROKE
@@ -58,18 +63,20 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
         canvas.drawBitmap(loresBitmap, 0F, 0F, rectPaint)
 
         analysisResult.sortedResults.forEachIndexed { index: Int, result ->
+            // Make the bounding boxes for reference and target objects standout as solid while
+            // others are dashed.
             if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
                 rectPaint.pathEffect = null
             } else {
                 rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
             }
-            rectPaint.color = LEGEND_COLORS[index % LEGEND_COLORS.size]
+            rectPaint.color = MARKUP_COLORS[index % MARKUP_COLORS.size]
             canvas.drawRect(result.locationAsRectF, rectPaint)
         }
 
         // Draw the legend at top left of the image
-        analysisResult.sortedResults.forEachIndexed { index: Int, result ->
-            legendPaint.color = LEGEND_COLORS[index]
+        analysisResult.sortedResults.forEachIndexed { index, result ->
+            legendPaint.color = MARKUP_COLORS[index]
             canvas.drawRect(
                 android.graphics.Rect(
                     10,
@@ -80,7 +87,7 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
                 legendPaint
             )
 
-            textPaint.color = LEGEND_COLORS[index]
+            textPaint.color = MARKUP_COLORS[index]
             canvas.drawText(
                 result.scoreAsFloat.toString(),
                 25F,
@@ -94,9 +101,8 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
     /**
      * @return The bitmaps filename, or null if couldn't save
      */
-    @RequiresApi(Build.VERSION_CODES.O)
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    fun save(dir : File, filename: String) {
+    fun save(dir: File, filename: String) {
         if (!dir.exists()) {
             dir.mkdir()
         }
@@ -118,6 +124,10 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
     }
 
     companion object {
+        /**
+         * Take a landscape orientation image straight off the preview image and scale/crop it
+         * down to the size that the TensorFlow model can process.
+         */
         fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap? {
             Log.d(
                 TAG,
@@ -153,8 +163,8 @@ class LoresBitmap(private var loresBitmap : Bitmap) {
         }
 
         private val TAG = LoresBitmap::class.java.simpleName
-         const val LORES_IMAGE_SIZE_PX = 300
-        val LEGEND_COLORS: List<Int> =
+        const val LORES_IMAGE_SIZE_PX = 300
+        val MARKUP_COLORS: List<Int> =
             listOf(
                 Color.RED,
                 Color.YELLOW,

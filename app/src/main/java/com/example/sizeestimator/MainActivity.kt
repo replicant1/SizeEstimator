@@ -34,8 +34,6 @@ import java.util.concurrent.Executors
 class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
-    private var videoCapture: VideoCapture<Recorder>? = null
-    private var recording: Recording? = null
     private lateinit var cameraExecutor: ExecutorService
 
     private val activityResultLauncher =
@@ -60,7 +58,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -84,9 +81,6 @@ class MainActivity : ComponentActivity() {
 
         // Create time stamped name and MediaStore entry.
         try {
-            val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                .format(System.currentTimeMillis())
-
             val tempFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "hires.jpg"
             val tempFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
                 File(tempFilePath)
@@ -108,8 +102,6 @@ class MainActivity : ComponentActivity() {
 
                     @RequiresApi(Build.VERSION_CODES.O)
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        val tempFile = File(tempFilePath)
-
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
                         Log.d(TAG, "About to crop photo to size expected by tensor flow model")
@@ -198,7 +190,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private val TAG = MainActivity::class.java.simpleName
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUIRED_PERMISSIONS =
             mutableListOf(
                 Manifest.permission.CAMERA,
@@ -212,7 +203,7 @@ class MainActivity : ComponentActivity() {
         val ANALYSED_IMAGE_DIR = File(
             getExternalStoragePublicDirectory(DIRECTORY_PICTURES).absolutePath
                     + File.separator
-                    + "My Fit Pro"
+                    + "SizeEstimator"
         )
     }
 }
