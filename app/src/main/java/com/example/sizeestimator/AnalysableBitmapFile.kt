@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.MainActivity.Companion.ANALYSED_IMAGE_DIR
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
@@ -19,22 +20,107 @@ import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class AnalysableBitmapFile {
+class AnalysableBitmapFile(private val bitmapFile: File) {
+
+    /**
+     * @param context application context
+     */
+    fun analyse(context: Context): AnalysisResult {
+        val bitmapToAnalyse = BitmapFactory.decodeFile(bitmapFile.absolutePath)
+        val model = SsdMobilenetV1.newInstance(context)
+        val image = TensorImage.fromBitmap(bitmapToAnalyse)
+        val outputs = model.process(image)
+        val analyser = Analyser(outputs.detectionResultList, 150F)
+
+        model.close()
+
+        return analyser.analyse()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun markup(analysisResult: AnalysisResult) {
+        val rectPaint = Paint()
+        rectPaint.style = Paint.Style.STROKE
+        rectPaint.strokeWidth = 2F
+        rectPaint.isAntiAlias = false
+
+        val textPaint = Paint()
+        textPaint.textSize = 14F
+        textPaint.typeface = Typeface.MONOSPACE
+        textPaint.strokeWidth = 2F
+
+        val legendPaint = Paint()
+        legendPaint.style = Paint.Style.FILL
+        legendPaint.strokeWidth = 2F
+
+        val immutableBitmap = BitmapFactory.decodeFile(bitmapFile.absolutePath)
+        val mutableBitmap = Bitmap.createBitmap(
+            immutableBitmap.width,
+            immutableBitmap.height,
+            Bitmap.Config.RGB_565
+        )
+        val canvas = Canvas(mutableBitmap)
+
+        // Copy mutable bitmap to the canvas so that we can draw on top of it
+        canvas.drawBitmap(immutableBitmap, 0F, 0F, rectPaint)
+
+        analysisResult.sortedResults.forEachIndexed { index: Int, result ->
+            if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
+                rectPaint.pathEffect = null
+            } else {
+                rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
+            }
+            rectPaint.color = RECT_COLORS[index % RECT_COLORS.size]
+            canvas.drawRect(result.locationAsRectF, rectPaint)
+        }
+
+        // Draw the legend at top left of the image
+        analysisResult.sortedResults.forEachIndexed { index: Int, result ->
+            legendPaint.color = RECT_COLORS[index]
+            canvas.drawRect(
+                android.graphics.Rect(
+                    10,
+                    10 + (index * 20),
+                    20,
+                    20 + (index * 20)
+                ),
+                legendPaint
+            )
+
+            textPaint.color = RECT_COLORS[index]
+            canvas.drawText(
+                result.scoreAsFloat.toString(),
+                25F,
+                20F + (index * 20),
+                textPaint
+            )
+        }
+        saveBitmapToUniqueFilename(mutableBitmap)
+    }
 
     companion object {
-        fun fromFullSizeBitmapFile(fullSizeBitmap: File): File? {
-            val rawBitmap = BitmapFactory.decodeFile(fullSizeBitmap.absolutePath)
+
+        /**
+         * Static factory method. Create the lo-res equivalent of the raw camera image that can
+         * be analysed and processed.
+         *
+         * @param cameraBitmapFile raw image produced by the camera. Assumed to be in landscape orientation.
+         * @return AnalysableBitmapFile that represents the given [cameraBitmapFile] transformed into
+         * a size and format suitable for TensorFlow processing. Will have dimensions [TENSOR_FLOW_IMAGE_SIZE_PX]
+         */
+        fun fromCameraBitmapFile(cameraBitmapFile: File): AnalysableBitmapFile? {
+            val rawBitmap = BitmapFactory.decodeFile(cameraBitmapFile.absolutePath)
             Log.d(
                 TAG,
                 "Cropping bitmap of width = ${rawBitmap.width}, height = ${rawBitmap.height}"
             )
 
-            // Cropping this much off width would make image square
+            // Cropping this much off width should make image square
             // NOTE: Assuming width > height
-            val cropEachSide = (rawBitmap.width - rawBitmap.height) / 2
+            val horizontalCrop = (rawBitmap.width - rawBitmap.height) / 2
             val squaredBitmap = Bitmap.createBitmap(
                 rawBitmap,
-                cropEachSide,
+                horizontalCrop,
                 0,
                 rawBitmap.height,
                 rawBitmap.height
@@ -47,7 +133,7 @@ class AnalysableBitmapFile {
 
             // Scale down to size expected by TensorFlow model
             val scaledSquareBitmap = Bitmap.createScaledBitmap(
-                squaredBitmap, TENSOR_FLOW_IMAGE_WIDTH_PX, TENSOR_FLOW_IMAGE_HEIGHT_PX, false
+                squaredBitmap, TENSOR_FLOW_IMAGE_SIZE_PX, TENSOR_FLOW_IMAGE_SIZE_PX, false
             )
             Log.d(
                 TAG,
@@ -55,13 +141,19 @@ class AnalysableBitmapFile {
             )
 
             // Save the cropped and scaled bitmap
-            return saveBitmapToUniqueFilename(scaledSquareBitmap)
+            val file =  saveBitmapToUniqueFilename(scaledSquareBitmap)
+            return if (file != null) {
+                AnalysableBitmapFile(file)
+            } else {
+                null
+            }
         }
 
         /**
-         * @return The saved bitmap's filename, or null if couldn't save
+         * @return The bitmaps filename, or null if couldn't save
          */
         @RequiresApi(Build.VERSION_CODES.O)
+        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
         fun saveBitmapToUniqueFilename(bitmapImage: Bitmap): File? {
             var result: File? = null
 
@@ -93,86 +185,8 @@ class AnalysableBitmapFile {
             return result
         }
 
-        /**
-         * @param imageFile Image ready to analyse with TensorFlow model. Assumed dimensions
-         * are TENSOR_FLOW_IMAGE_WIDTH_PX x TENSOR_FLOW_IMAGE_HEIGHT_PX.
-         */
-        fun analyseImageFile(imageFile: File, context: Context): AnalysisResult {
-            val bitmapToAnalyse = BitmapFactory.decodeFile(imageFile.absolutePath)
-            val model = SsdMobilenetV1.newInstance(context)
-            val image = TensorImage.fromBitmap(bitmapToAnalyse)
-            val outputs = model.process(image)
-            val analyser = Analyser(outputs.detectionResultList, 150F)
-
-            model.close()
-
-            return analyser.analyse()
-        }
-
-        @RequiresApi(Build.VERSION_CODES.O)
-        fun markupImageFile(imageFile: File, analysisResult: AnalysisResult) {
-            val rectPaint = Paint()
-            rectPaint.style = Paint.Style.STROKE
-            rectPaint.strokeWidth = 2F
-            rectPaint.isAntiAlias = false
-
-            val textPaint = Paint()
-            textPaint.textSize = 14F
-            textPaint.typeface = Typeface.MONOSPACE
-            textPaint.strokeWidth = 2F
-
-            val legendPaint = Paint()
-            legendPaint.style = Paint.Style.FILL
-            legendPaint.strokeWidth = 2F
-
-            val immutableBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
-            val mutableBitmap = Bitmap.createBitmap(
-                immutableBitmap.width,
-                immutableBitmap.height,
-                Bitmap.Config.RGB_565
-            )
-            val canvas = Canvas(mutableBitmap)
-
-            // Copy mutable bitmap to the canvas so that we can draw on top of it
-            canvas.drawBitmap(immutableBitmap, 0F, 0F, rectPaint)
-
-            analysisResult.sortedResults.forEachIndexed { index: Int, result ->
-                if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
-                    rectPaint.pathEffect = null
-                } else {
-                    rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
-                }
-                rectPaint.color = RECT_COLORS[index % RECT_COLORS.size]
-                canvas.drawRect(result.locationAsRectF, rectPaint)
-            }
-
-            // Draw the legend at top left of the image
-            analysisResult.sortedResults.forEachIndexed { index: Int, result ->
-                legendPaint.color = RECT_COLORS[index]
-                canvas.drawRect(
-                    android.graphics.Rect(
-                        10,
-                        10 + (index * 20),
-                        20,
-                        20 + (index * 20)
-                    ),
-                    legendPaint
-                )
-
-                textPaint.color = RECT_COLORS[index]
-                canvas.drawText(
-                    result.scoreAsFloat.toString(),
-                    25F,
-                    20F + (index * 20),
-                    textPaint
-                )
-            }
-            saveBitmapToUniqueFilename(mutableBitmap)
-        }
-
         private val TAG = AnalysableBitmapFile::class.java.simpleName
-        private const val TENSOR_FLOW_IMAGE_WIDTH_PX = 300
-        private const val TENSOR_FLOW_IMAGE_HEIGHT_PX = 300
+        private const val TENSOR_FLOW_IMAGE_SIZE_PX = 300
         val RECT_COLORS: List<Int> =
             listOf(
                 Color.RED,

@@ -2,13 +2,6 @@ package com.example.sizeestimator
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.DashPathEffect
-import android.graphics.Paint
-import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment.DIRECTORY_PICTURES
@@ -27,16 +20,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import com.example.sizeestimator.databinding.ActivityMainBinding
-import com.example.sizeestimator.ml.SsdMobilenetV1
-import org.tensorflow.lite.support.image.TensorImage
 import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -125,14 +112,14 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
                         Log.d(TAG, "About to crop photo to size expected by tensor flow model")
-                        val analysableBitmapFile = AnalysableBitmapFile.fromFullSizeBitmapFile(tempFile)
+                        val analysableBitmapFile = AnalysableBitmapFile.fromCameraBitmapFile(tempFile)
 
                         if (analysableBitmapFile != null) {
                             Log.d(TAG, "About to analyse the cropped and scaled image")
-                            val result = AnalysableBitmapFile.Companion.analyseImageFile(analysableBitmapFile, this@MainActivity)
+                            val result = analysableBitmapFile.analyse(this@MainActivity)
 
                             Log.d(TAG, "About to mark up cropped image")
-                            AnalysableBitmapFile.markupImageFile(analysableBitmapFile, result)
+                            analysableBitmapFile.markup(result)
 
                             // Put result on screen
                             viewBinding.textView.text = "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
