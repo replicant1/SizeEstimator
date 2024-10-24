@@ -2,6 +2,7 @@ package com.example.sizeestimator
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment.DIRECTORY_PICTURES
@@ -112,14 +113,20 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
                         Log.d(TAG, "About to crop photo to size expected by tensor flow model")
-                        val analysableBitmapFile = AnalysableBitmapFile.fromCameraBitmapFile(tempFile)
+                        val cameraImage = BitmapFactory.decodeFile(tempFilePath)
+                        Log.d(TAG, "Camera image: width=${cameraImage.width}, height=${cameraImage.height}")
 
-                        if (analysableBitmapFile != null) {
+                        val loresBitmap = LoresBitmap.fromCameraBitmap(cameraImage)
+
+                        if (loresBitmap != null) {
                             Log.d(TAG, "About to analyse the cropped and scaled image")
-                            val result = analysableBitmapFile.analyse(this@MainActivity)
+                            val result = loresBitmap.analyse(this@MainActivity)
 
                             Log.d(TAG, "About to mark up cropped image")
-                            analysableBitmapFile.markup(result)
+                            loresBitmap.markup(result)
+
+                            // Save bitmap
+                            loresBitmap.save("bob.jpg")
 
                             // Put result on screen
                             viewBinding.textView.text = "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
