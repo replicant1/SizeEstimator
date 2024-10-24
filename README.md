@@ -51,18 +51,30 @@ The algorithm above can be visualized by looking at the following samples. The a
 ![Cropped](/doc/sample1/cropped.jpg)
 ![Markedup](/doc/sample1/marked_up.jpg)
 
+Actual Size: 99 x 71 mm
+Estimated Size: 103 x 85 mm
+
 ## Sample 2
 
 ![Cropped](/doc/sample2/cropped.jpg)
 ![Markedup](/doc/sample2/marked_up.jpg)
+
+Actual Size: 100 x 100 mm
+Estimated Size: 114 x 120 mm
 
 ## Sample 3
 
 ![Cropped](/doc/sample3/cropped.jpg)
 ![Markedup](/doc/sample3/marked_up.jpg)
 
+Actual Size: 128 x 77 mm
+Estimated Size: 135 x 71 mm
+
 ## Sample 4
 
 ![Cropped](/doc/sample4/cropped.jpg)
 ![Markedup](/doc/sample4/marked_up.jpg)
+
+Actual SizeL: 89 x 93 mm
+Estimated Size: 96 x 104 mm
 
