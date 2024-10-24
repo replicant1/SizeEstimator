@@ -403,7 +403,7 @@ class MainActivity : ComponentActivity() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                    it.setSurfaceProvider(viewBinding.previewView.surfaceProvider)
                 }
 
             imageCapture = ImageCapture.Builder().build()
