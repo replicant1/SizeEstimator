@@ -35,7 +35,7 @@ To use the app:
 
 # Algorithm
 
-- `Tensor Flow Lite` is used to generate a set of bounding boxes for all the objects in the image
+- `Tensor Flow Lite` is used to generate a set of bounding boxes for all the objects in the image.
 - Each bounding box has a `score` associated with it
 - The bounding box for the reference object is found by identifying the bounding box with the highest score that is below the midpoint of the preview image.
 - The bounding box for the target object is the bounding box with the highest score that is above the reference object's bounding box.
@@ -47,6 +47,8 @@ To use the app:
 The algorithm above can be visualized by looking at the following samples. The app generates two images as a side-effect of each measurement taken. The first is obtained by cropping the camera image to square, then scaling it down to 300 x 300 pixels, which is the size expected by the Tensor Flow model. The model is then applied to the 300 x 300 image, which results in a set of bounding boxes for each object found. Those boxes and an accompanying legend appear below. The two boxes that are drawn with a solid line correspond to the reference and target objects. The rest are drawn with a dashed line.
 
 ## Sample 1
+
+To view these artifacts you need to look in the cache dir for the app. eg. `/data/data/com.example.sizeestimator/cache`
 
 ![Cropped](/doc/sample1/cropped.jpg)
 ![Markedup](/doc/sample1/marked_up.jpg)
@@ -78,4 +80,15 @@ Estimated Size: 135 x 71 mm
 
 Actual SizeL: 89 x 93 mm,
 Estimated Size: 96 x 104 mm
+
+## Discussion
+
+Due to time limitations there are a few changes I would have liked to make but was not able to:
+- There is a problem with the orientation of images from Camera X. When the device is in portrait orientation, the captured images are in landscape orientation. I would like to investigate this more thoroughly. I side-stepped it by locking the app to landscape orientation, in which mode this bug does not appear.
+- The files `lores.jpg` and `hires.jpg` are in the app's cache directory and are replaced every time the app is run, but they are not explicitly deleted at any time.
+- More tests - particularly instrumented tests. Measure statement coverage of tests.
+- Accuracy of size estimates seems low - can anything be done to improve it? eg. lighting, contrast, alignment of objects.
+- Some sort of overlay on the preview image to help users position the reference object.
+- Ability to enter the real size of the reference object through the UI, rather than having to change the code.
+- Having a large file like `ssd_mobilenet_v1.tflite` can create trouble for GIT operations timing out. Need to increase GIT postBuffer size.
 
