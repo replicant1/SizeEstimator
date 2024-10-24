@@ -1,24 +1,19 @@
 package com.example.sizeestimator
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment.DIRECTORY_PICTURES
 import android.os.Environment.getExternalStoragePublicDirectory
-import android.provider.MediaStore
 import android.util.Log
-import android.view.Surface
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -29,13 +24,11 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
-import androidx.camera.core.impl.utils.Exif
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.alpha
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
@@ -87,7 +80,7 @@ class MainActivity : ComponentActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
-        // Reqwuest camera permissions
+        // Request camera permissions
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -95,32 +88,35 @@ class MainActivity : ComponentActivity() {
         }
 
         viewBinding.imageCaptureButton.setOnClickListener { takePhoto() }
-
         cameraExecutor = Executors.newSingleThreadExecutor()
+    }
 
-        val immutablebitmap = getBitmapFromAsset(this, "shim.jpg")
-        println("** bitmap = $immutablebitmap. bitmap width = ${immutablebitmap?.width} and height = ${immutablebitmap?.height}")
+    /**
+     * @param imageFile 300 x 300 pixel image ready to analyse with TensorFlow model.
+     */
+    private fun analyseImageFile(imageFile: File): AnalysisResult {
+        val bitmapToAnalyse = BitmapFactory.decodeFile(imageFile.absolutePath)
 
         val model = SsdMobilenetV1.newInstance(this)
-        val image = TensorImage.fromBitmap(immutablebitmap)
+        val image = TensorImage.fromBitmap(bitmapToAnalyse)
         val outputs = model.process(image)
-
         val resultsByScore = outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
 
         val referenceObjectIndex = findReferenceObject(resultsByScore)
-        println("** referenceObjectIndex = $referenceObjectIndex")
-        if (referenceObjectIndex == -1) {
-            println("** UNABLE TO FIND REFERENCE OBJECT **")
-        }
-
         val targetObjectIndex = findTargetObject(resultsByScore, referenceObjectIndex)
-        println("** targetObjectIndex = $targetObjectIndex")
-        if (targetObjectIndex == -1) {
-            println("** UNABLE TO FIND TARGET OBJECT **")
+
+        val targetObjectSize = if ((referenceObjectIndex != -1) && (targetObjectIndex != -1)) {
+            calculateTargetObjectSize(resultsByScore, referenceObjectIndex, targetObjectIndex)
+        } else {
+            Pair(-1L, -1L)
         }
 
-        // Now - measure targetObject wrt. referenceObject
+        model.close()
 
+        return AnalysisResult(outputs, referenceObjectIndex, targetObjectIndex, targetObjectSize)
+    }
+
+    private fun markupImageFile(imageFile: File, analysisResult: AnalysisResult) {
         val rectPaint = Paint()
         rectPaint.style = Paint.Style.STROKE
         rectPaint.strokeWidth = 2F
@@ -135,112 +131,107 @@ class MainActivity : ComponentActivity() {
         legendPaint.style = Paint.Style.FILL
         legendPaint.strokeWidth = 2F
 
-        println("** ----------------------------------- **")
-        println("** number of detection results = ${outputs.detectionResultList.size}")
+        val immutableBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
+        val mutableBitmap = Bitmap.createBitmap(
+            immutableBitmap.width,
+            immutableBitmap.height,
+            Bitmap.Config.RGB_565
+        )
+        val canvas = Canvas(mutableBitmap)
+        // Copy mutable bitmap to the canvas so that we can draw on top of it
+        canvas.drawBitmap(immutableBitmap, 0F, 0F, rectPaint)
 
-        if (immutablebitmap != null) {
-            val mutableBitmap = Bitmap.createBitmap(
-                immutablebitmap.width,
-                immutablebitmap.height,
-                Bitmap.Config.RGB_565
-            )
-            val canvas = Canvas(mutableBitmap)
-            canvas.drawBitmap(immutablebitmap, 0F, 0F, rectPaint)
+        val descendingScores =
+            analysisResult.outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
 
-            val descendingScores =
-                outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
-
-            if (referenceObjectIndex != -1) {
-                val referenceObject = descendingScores[referenceObjectIndex]
-                rectPaint.color = Color.RED
-                canvas.drawRect(referenceObject.locationAsRectF, rectPaint)
-            }
-
-            if (targetObjectIndex != -1) {
-                val targetObject = descendingScores[targetObjectIndex]
-                rectPaint.color = Color.BLUE
-                canvas.drawRect(targetObject.locationAsRectF, rectPaint)
-            }
-
-            if ((referenceObjectIndex != -1) && (targetObjectIndex != -1)) {
-                println("** Calculating target object size **")
-                calculateTargetObjectSize(
-                    resultsByScore,
-                    referenceObjectIndex,
-                    targetObjectIndex)
-            }
-
-            descendingScores.forEachIndexed { index: Int, result ->
-                println("** result[$index] = $result")
-                println("**    category = $")
-                println("**    location as rectangle = ${result.locationAsRectF}")
-                println("**    score = ${result.scoreAsFloat}")
-                rectPaint.color = RECT_COLORS[index]
-                canvas.drawRect(result.locationAsRectF, rectPaint)
-            }
-
-            // Draw the key
-            descendingScores.forEachIndexed { index:Int, result ->
-                // legend entry
-                legendPaint.color = RECT_COLORS[index]
-                canvas.drawRect(
-                    android.graphics.Rect(
-                        10,
-                        10 + (index * 20),
-                        20,
-                        20 + (index * 20)
-                    ),
-                    legendPaint
-                )
-
-                textPaint.color = RECT_COLORS[index]
-                canvas.drawText(
-                    result.scoreAsFloat.toString(),
-                    25F,
-                    20F + (index * 20),
-                    textPaint
-                )
-            }
-
-//            saveBitmap(mutableBitmap)
-
+        if (analysisResult.referenceObjectIndex != -1) {
+            val referenceObject = descendingScores[analysisResult.referenceObjectIndex]
+            rectPaint.color = Color.RED
+            canvas.drawRect(referenceObject.locationAsRectF, rectPaint)
         }
 
-        model.close()
+        if (analysisResult.targetObjectIndex != -1) {
+            val targetObject = descendingScores[analysisResult.targetObjectIndex]
+            rectPaint.color = Color.BLUE
+            canvas.drawRect(targetObject.locationAsRectF, rectPaint)
+        }
+
+        if ((analysisResult.referenceObjectIndex != -1) && (analysisResult.targetObjectIndex != -1)) {
+            println("** Calculating target object size **")
+            calculateTargetObjectSize(
+                descendingScores,
+                analysisResult.referenceObjectIndex,
+                analysisResult.targetObjectIndex
+            )
+        }
+
+        descendingScores.forEachIndexed { index: Int, result ->
+            println("** result[$index] = $result")
+            println("**    category = $")
+            println("**    location as rectangle = ${result.locationAsRectF}")
+            println("**    score = ${result.scoreAsFloat}")
+            rectPaint.color = RECT_COLORS[index]
+            canvas.drawRect(result.locationAsRectF, rectPaint)
+        }
+
+        // Draw the key
+        descendingScores.forEachIndexed { index: Int, result ->
+            // legend entry
+            legendPaint.color = RECT_COLORS[index]
+            canvas.drawRect(
+                android.graphics.Rect(
+                    10,
+                    10 + (index * 20),
+                    20,
+                    20 + (index * 20)
+                ),
+                legendPaint
+            )
+
+            textPaint.color = RECT_COLORS[index]
+            canvas.drawText(
+                result.scoreAsFloat.toString(),
+                25F,
+                20F + (index * 20),
+                textPaint
+            )
+        }
+        saveBitmapToUniqueFilename(mutableBitmap)
     }
 
-    private fun calculateTargetObjectSize(sortedResults: List<SsdMobilenetV1.DetectionResult>,
-                                          referenceObjectIndex: Int,
-                                          targetObjectIndex: Int) : Float {
+    private fun calculateTargetObjectSize(
+        sortedResults: List<SsdMobilenetV1.DetectionResult>,
+        referenceObjectIndex: Int,
+        targetObjectIndex: Int
+    ): Pair<Long, Long> {
         val referenceObjectResult = sortedResults[referenceObjectIndex]
         val targetObjectResult = sortedResults[targetObjectIndex]
 
         val referenceObjectWidthPx = referenceObjectResult.locationAsRectF.width()
-        val targetObjectWidthPx = targetObjectResult.locationAsRectF.width()
+        val mmPerPixel = REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 
-        val ratio = targetObjectWidthPx / referenceObjectWidthPx
-        val actualReferenceObjectWidth = 210F // mm
-        val actualTargetObjectWidth = ratio * actualReferenceObjectWidth
+        val actualTargetObjectWidthMm = targetObjectResult.locationAsRectF.width() * mmPerPixel
+        val actualTargetObjectHeightMm = targetObjectResult.locationAsRectF.height() * mmPerPixel
 
         println("** referenceObjectResult = $referenceObjectResult")
         println("** targetObjectResult = $targetObjectResult")
 
         println("** referenceObjectWidthPx = $referenceObjectWidthPx")
-        println("** targetObjectWidthPx = $targetObjectWidthPx")
+        println("** mmPerPixel = $mmPerPixel")
 
-        println("** ratio = $ratio")
-        println("** actualTargetObjectWidth = $actualTargetObjectWidth")
+        println("** actualTargetObjectWidthMm = $actualTargetObjectWidthMm")
+        println("** actualTargetObjectHeightMm = $actualTargetObjectHeightMm")
 
-        return actualTargetObjectWidth
+        return Pair(actualTargetObjectWidthMm.toLong(), actualTargetObjectHeightMm.toLong())
     }
 
     /**
      * @param sortedResults Sorted from highest score to lowest score
      * @return Index into [sortedResults] of the reference object. -1 if not found.
      */
-    private fun findReferenceObject(sortedResults: List<SsdMobilenetV1.DetectionResult>) : Int {
+    private fun findReferenceObject(sortedResults: List<SsdMobilenetV1.DetectionResult>): Int {
         // Highest scoring result that is below the vertical midpoint = reference object
-        sortedResults.forEachIndexed { index:Int, result ->
+        sortedResults.forEachIndexed { index: Int, result ->
             if (result.locationAsRectF.top > 150F) {
                 return index
             }
@@ -252,11 +243,13 @@ class MainActivity : ComponentActivity() {
      * @param sortedResults Sorted from highest score to lowest score
      * @return Index into [sortedResults] of the target object. -1 if not found.
      */
-    private fun findTargetObject(sortedResults: List<SsdMobilenetV1.DetectionResult>,
-                                 referenceObjectIndex: Int) : Int {
+    private fun findTargetObject(
+        sortedResults: List<SsdMobilenetV1.DetectionResult>,
+        referenceObjectIndex: Int
+    ): Int {
         val referenceObject = sortedResults[referenceObjectIndex]
         // Highest scoring result that is above the reference object = target object
-        sortedResults.forEachIndexed { index:Int, result ->
+        sortedResults.forEachIndexed { index: Int, result ->
             if (result.locationAsRectF.bottom < referenceObject.locationAsRectF.top) {
                 return index
             }
@@ -264,8 +257,13 @@ class MainActivity : ComponentActivity() {
         return -1
     }
 
+    /**
+     * @return The saved bitmap's filename, or null if couldn't save
+     */
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun saveBitmap(bitmapImage: Bitmap) {
+    private fun saveBitmapToUniqueFilename(bitmapImage: Bitmap) : File? {
+        var result : File? = null
+
         if (!ANALYSED_IMAGE_DIR.exists()) {
             ANALYSED_IMAGE_DIR.mkdir()
         }
@@ -277,18 +275,21 @@ class MainActivity : ComponentActivity() {
                 ) +
                 ".jpg"
 
-        println("** About to write to file: $path")
+        Log.d(TAG, "About to save bitmap to file: $path")
 
         try {
             val fileOutputStream = FileOutputStream(path)
             bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
             fileOutputStream.close()
 
-            println("** Wrote OK to file $path")
+            Log.d(TAG,"Wrote bitmap OK to file $path")
 
+            result = File(path)
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
+
+        return result
     }
 
     private fun getBitmapFromAsset(context: Context, filePath: String): Bitmap? {
@@ -306,31 +307,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun takePhoto() {
-
-        println("*** Into takePhoto ***")
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        println("** imageCapture = $imageCapture")
-
         // Create time stamped name and MediaStore entry.
         try {
-            println("** about to dateformat **")
             val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis())
             println("** name = $name")
 
-            val outputFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "temp.jpg"
-            val outputOptions = ImageCapture.OutputFileOptions.Builder(
-                File(outputFilePath)
+            val tempFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "temp.jpg"
+            val tempFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
+                File(tempFilePath)
             ).build()
-
-            println("** outputOptions = $outputOptions")
 
             // Set up image capture listener, which is triggered after photo has
             // been taken
             imageCapture.takePicture(
-                outputOptions,
+                tempFileOutputOptions,
                 ContextCompat.getMainExecutor(this),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
@@ -338,14 +332,24 @@ class MainActivity : ComponentActivity() {
                     }
 
                     @RequiresApi(Build.VERSION_CODES.O)
-                    @SuppressLint("RestrictedApi")
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        val msg = "** Photo capture succeeded: ${output.savedUri}"
-                        val exif = Exif.createFromFile(File(outputFilePath))
-                        Log.d(TAG, "** exif = $exif")
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                        Log.d(TAG, msg)
-                        cropBitmap(outputFilePath)
+                        val tempFile = File(tempFilePath)
+
+//                        val exif = Exif.createFromFile(tempFile)
+//                        Log.d(TAG, "** exif = $exif")
+
+                        Log.d(TAG, "Saved photo to ${output.savedUri}")
+
+                        Log.d(TAG, "About to crop photo to 300x300")
+                        val analysableBitmapFile = cropAndScaleBitmapToAnalysableSize(tempFile)
+
+                        if (analysableBitmapFile != null) {
+                            Log.d(TAG, "About to analyse the cropped and scaled image")
+                            val results = analyseImageFile(analysableBitmapFile)
+
+                            Log.d(TAG, "About to mark up cropped image")
+                            markupImageFile(analysableBitmapFile, results)
+                        }
                     }
                 }
             )
@@ -355,26 +359,29 @@ class MainActivity : ComponentActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun cropBitmap(bitmapPath : String) {
-        val rawBitmap = BitmapFactory.decodeFile(bitmapPath)
-        println("** rawBitmap.width = ${rawBitmap.width}")
-        println("** rawBitmap.height = ${rawBitmap.height}")
+    private fun cropAndScaleBitmapToAnalysableSize(bitmapFile: File) : File? {
+        val rawBitmap = BitmapFactory.decodeFile(bitmapFile.absolutePath)
+        Log.d(TAG, "Cropping bitmap of width = ${rawBitmap.width}, height = ${rawBitmap.height}")
 
         // Cropping this much off width would make image square
-        val widthToCrop = rawBitmap.width - rawBitmap.height
-        println("** widthToCrop = $widthToCrop")
+        // NOTE: Assuming width > height
+        val cropEachSide = (rawBitmap.width - rawBitmap.height) / 2
         val squaredBitmap = Bitmap.createBitmap(
             rawBitmap,
-            widthToCrop / 2,
+            cropEachSide,
             0,
             rawBitmap.height,
-            rawBitmap.height)
+            rawBitmap.height
+        )
 
-        println("** squaredBitmap has height = ${squaredBitmap.height}, width = ${squaredBitmap.width}")
+        Log.d(TAG, "Squared bitmap has height = ${squaredBitmap.height}, width = ${squaredBitmap.width}")
 
-        // Scale down to 300x300
+        // Scale down to 300x300 for use by TensorFlow model
         val scaledSquareBitmap = Bitmap.createScaledBitmap(squaredBitmap, 300, 300, false)
-        saveBitmap(scaledSquareBitmap)
+        Log.d(TAG, "Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}")
+
+        // Save the cropped and scaled bitmap
+        return saveBitmapToUniqueFilename(scaledSquareBitmap)
     }
 
     private fun startCamera() {
@@ -432,7 +439,8 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val TAG = "CameraXApp"
+        private val TAG = MainActivity::class.java.simpleName
+        private const val REFERENCE_OBJECT_WIDTH_MM = 123F
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUIRED_PERMISSIONS =
             mutableListOf(
