@@ -1,6 +1,7 @@
 package com.example.sizeestimator
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
@@ -17,6 +18,7 @@ import android.os.Environment.DIRECTORY_PICTURES
 import android.os.Environment.getExternalStoragePublicDirectory
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Surface
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +29,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.impl.utils.Exif
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
@@ -92,23 +95,36 @@ class MainActivity : ComponentActivity() {
         }
 
         viewBinding.imageCaptureButton.setOnClickListener { takePhoto() }
-        viewBinding.videoCaptureButton.setOnClickListener { captureVideo() }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-
-        val immutablebitmap = getBitmapFromAsset(this, "test_4.jpg")
+        val immutablebitmap = getBitmapFromAsset(this, "shim.jpg")
         println("** bitmap = $immutablebitmap. bitmap width = ${immutablebitmap?.width} and height = ${immutablebitmap?.height}")
 
         val model = SsdMobilenetV1.newInstance(this)
         val image = TensorImage.fromBitmap(immutablebitmap)
         val outputs = model.process(image)
 
+        val resultsByScore = outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
+
+        val referenceObjectIndex = findReferenceObject(resultsByScore)
+        println("** referenceObjectIndex = $referenceObjectIndex")
+        if (referenceObjectIndex == -1) {
+            println("** UNABLE TO FIND REFERENCE OBJECT **")
+        }
+
+        val targetObjectIndex = findTargetObject(resultsByScore, referenceObjectIndex)
+        println("** targetObjectIndex = $targetObjectIndex")
+        if (targetObjectIndex == -1) {
+            println("** UNABLE TO FIND TARGET OBJECT **")
+        }
+
+        // Now - measure targetObject wrt. referenceObject
+
         val rectPaint = Paint()
         rectPaint.style = Paint.Style.STROKE
         rectPaint.strokeWidth = 2F
         rectPaint.isAntiAlias = false
-        //rectPaint.pathEffect = DashPathEffect(floatArrayOf(4F, 1F), 1F)
 
         val textPaint = Paint()
         textPaint.textSize = 14F
@@ -118,10 +134,6 @@ class MainActivity : ComponentActivity() {
         val legendPaint = Paint()
         legendPaint.style = Paint.Style.FILL
         legendPaint.strokeWidth = 2F
-
-        val legendFillPaint = Paint()
-        legendFillPaint.style = Paint.Style.FILL
-        legendFillPaint.color = Color.parseColor("#50FFFFFF")
 
         println("** ----------------------------------- **")
         println("** number of detection results = ${outputs.detectionResultList.size}")
@@ -138,8 +150,27 @@ class MainActivity : ComponentActivity() {
             val descendingScores =
                 outputs.detectionResultList.sortedByDescending { it.scoreAsFloat }
 
+            if (referenceObjectIndex != -1) {
+                val referenceObject = descendingScores[referenceObjectIndex]
+                rectPaint.color = Color.RED
+                canvas.drawRect(referenceObject.locationAsRectF, rectPaint)
+            }
+
+            if (targetObjectIndex != -1) {
+                val targetObject = descendingScores[targetObjectIndex]
+                rectPaint.color = Color.BLUE
+                canvas.drawRect(targetObject.locationAsRectF, rectPaint)
+            }
+
+            if ((referenceObjectIndex != -1) && (targetObjectIndex != -1)) {
+                println("** Calculating target object size **")
+                calculateTargetObjectSize(
+                    resultsByScore,
+                    referenceObjectIndex,
+                    targetObjectIndex)
+            }
+
             descendingScores.forEachIndexed { index: Int, result ->
-                // draw rectangle
                 println("** result[$index] = $result")
                 println("**    category = $")
                 println("**    location as rectangle = ${result.locationAsRectF}")
@@ -147,11 +178,6 @@ class MainActivity : ComponentActivity() {
                 rectPaint.color = RECT_COLORS[index]
                 canvas.drawRect(result.locationAsRectF, rectPaint)
             }
-
-//            canvas.drawRect(
-//                android.graphics.Rect(10, 10, 120, descendingScores.size * 20),
-//                    legendFillPaint)
-
 
             // Draw the key
             descendingScores.forEachIndexed { index:Int, result ->
@@ -176,11 +202,66 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            saveBitmap(mutableBitmap)
+//            saveBitmap(mutableBitmap)
 
         }
 
         model.close()
+    }
+
+    private fun calculateTargetObjectSize(sortedResults: List<SsdMobilenetV1.DetectionResult>,
+                                          referenceObjectIndex: Int,
+                                          targetObjectIndex: Int) : Float {
+        val referenceObjectResult = sortedResults[referenceObjectIndex]
+        val targetObjectResult = sortedResults[targetObjectIndex]
+
+        val referenceObjectWidthPx = referenceObjectResult.locationAsRectF.width()
+        val targetObjectWidthPx = targetObjectResult.locationAsRectF.width()
+
+        val ratio = targetObjectWidthPx / referenceObjectWidthPx
+        val actualReferenceObjectWidth = 210F // mm
+        val actualTargetObjectWidth = ratio * actualReferenceObjectWidth
+
+        println("** referenceObjectResult = $referenceObjectResult")
+        println("** targetObjectResult = $targetObjectResult")
+
+        println("** referenceObjectWidthPx = $referenceObjectWidthPx")
+        println("** targetObjectWidthPx = $targetObjectWidthPx")
+
+        println("** ratio = $ratio")
+        println("** actualTargetObjectWidth = $actualTargetObjectWidth")
+
+        return actualTargetObjectWidth
+    }
+
+    /**
+     * @param sortedResults Sorted from highest score to lowest score
+     * @return Index into [sortedResults] of the reference object. -1 if not found.
+     */
+    private fun findReferenceObject(sortedResults: List<SsdMobilenetV1.DetectionResult>) : Int {
+        // Highest scoring result that is below the vertical midpoint = reference object
+        sortedResults.forEachIndexed { index:Int, result ->
+            if (result.locationAsRectF.top > 150F) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    /**
+     * @param sortedResults Sorted from highest score to lowest score
+     * @return Index into [sortedResults] of the target object. -1 if not found.
+     */
+    private fun findTargetObject(sortedResults: List<SsdMobilenetV1.DetectionResult>,
+                                 referenceObjectIndex: Int) : Int {
+        val referenceObject = sortedResults[referenceObjectIndex]
+        // Highest scoring result that is above the reference object = target object
+        sortedResults.forEachIndexed { index:Int, result ->
+            if (result.locationAsRectF.bottom < referenceObject.locationAsRectF.top) {
+                return index
+            }
+        }
+        return -1
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -239,22 +320,10 @@ class MainActivity : ComponentActivity() {
                 .format(System.currentTimeMillis())
             println("** name = $name")
 
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
-                }
-            }
-
-            // Create output options object which contains file + metadata
-            val outputOptions = ImageCapture.OutputFileOptions
-                .Builder(
-                    contentResolver,
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    contentValues
-                )
-                .build()
+            val outputFilePath = ANALYSED_IMAGE_DIR.absolutePath + File.separator + "temp.jpg"
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(
+                File(outputFilePath)
+            ).build()
 
             println("** outputOptions = $outputOptions")
 
@@ -268,10 +337,15 @@ class MainActivity : ComponentActivity() {
                         Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                     }
 
+                    @RequiresApi(Build.VERSION_CODES.O)
+                    @SuppressLint("RestrictedApi")
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        val msg = "Photo capture succeeded: ${output.savedUri}"
+                        val msg = "** Photo capture succeeded: ${output.savedUri}"
+                        val exif = Exif.createFromFile(File(outputFilePath))
+                        Log.d(TAG, "** exif = $exif")
                         Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                         Log.d(TAG, msg)
+                        cropBitmap(outputFilePath)
                     }
                 }
             )
@@ -280,7 +354,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun captureVideo() {}
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun cropBitmap(bitmapPath : String) {
+        val rawBitmap = BitmapFactory.decodeFile(bitmapPath)
+        println("** rawBitmap.width = ${rawBitmap.width}")
+        println("** rawBitmap.height = ${rawBitmap.height}")
+
+        // Cropping this much off width would make image square
+        val widthToCrop = rawBitmap.width - rawBitmap.height
+        println("** widthToCrop = $widthToCrop")
+        val squaredBitmap = Bitmap.createBitmap(
+            rawBitmap,
+            widthToCrop / 2,
+            0,
+            rawBitmap.height,
+            rawBitmap.height)
+
+        println("** squaredBitmap has height = ${squaredBitmap.height}, width = ${squaredBitmap.width}")
+
+        // Scale down to 300x300
+        val scaledSquareBitmap = Bitmap.createScaledBitmap(squaredBitmap, 300, 300, false)
+        saveBitmap(scaledSquareBitmap)
+    }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -313,7 +408,7 @@ class MainActivity : ComponentActivity() {
 
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture,// imageAnalyzer
+                    this, cameraSelector, preview, imageCapture, // imageAnalyzer
                 )
 
             } catch (exc: Exception) {

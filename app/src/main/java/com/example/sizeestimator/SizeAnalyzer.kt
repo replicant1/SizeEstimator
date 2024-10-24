@@ -15,6 +15,7 @@ class SizeAnalyzer(/*private val listener: LumaListener*/) : ImageAnalysis.Analy
 
     override fun analyze(image: ImageProxy) {
         println("** Into analyze")
+        println("** image.height = ${image.height}, image.width = ${image.width}")
 
         val buffer = image.planes[0].buffer
         val data = buffer.toByteArray()
