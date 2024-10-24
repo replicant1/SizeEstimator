@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
@@ -171,6 +172,11 @@ class MainActivity : ComponentActivity() {
             println("**    category = $")
             println("**    location as rectangle = ${result.locationAsRectF}")
             println("**    score = ${result.scoreAsFloat}")
+            if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
+                rectPaint.pathEffect = null
+            } else {
+                rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
+            }
             rectPaint.color = RECT_COLORS[index]
             canvas.drawRect(result.locationAsRectF, rectPaint)
         }
