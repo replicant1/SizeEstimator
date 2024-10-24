@@ -173,7 +173,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
             }
-            rectPaint.color = RECT_COLORS[index]
+            rectPaint.color = RECT_COLORS[index % RECT_COLORS.size]
             canvas.drawRect(result.locationAsRectF, rectPaint)
         }
 
@@ -408,12 +408,6 @@ class MainActivity : ComponentActivity() {
 
             imageCapture = ImageCapture.Builder().build()
 
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, SizeAnalyzer())
-                }
-
             // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
@@ -423,7 +417,7 @@ class MainActivity : ComponentActivity() {
 
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture, // imageAnalyzer
+                    this, cameraSelector, preview, imageCapture,
                 )
 
             } catch (exc: Exception) {
