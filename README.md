@@ -87,7 +87,7 @@ Estimated Size: 96 x 104 mm
 Due to time limitations there are a few changes I would have liked to make but was not able to:
 - There is a problem with the orientation of images from Camera X. When the device is in portrait orientation, the captured images are in landscape orientation. I would like to investigate this more thoroughly. I side-stepped it by locking the app to landscape orientation, in which mode this bug does not appear.
 - The files `lores.jpg` and `hires.jpg` are in the app's cache directory and are replaced every time the app is run, but they are not explicitly deleted at any time.
-- Tests - didn't have time to do much - needs instrumented tests.
+- Tests - only had time for one test class - needs instrumented tests.
 - Accuracy of size estimates seems low - can anything be done to improve it? eg. lighting, contrast, alignment of objects.
 - Some sort of overlay on the preview image to help users position the reference object.
 - Ability to enter the real size of the reference object through the UI, rather than having to change the code.
