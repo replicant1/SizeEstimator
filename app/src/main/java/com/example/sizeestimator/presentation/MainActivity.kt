@@ -1,4 +1,4 @@
-package com.example.sizeestimator
+package com.example.sizeestimator.presentation
 
 import android.Manifest
 import android.content.pm.PackageManager

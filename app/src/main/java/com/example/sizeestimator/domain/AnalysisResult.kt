@@ -1,4 +1,4 @@
-package com.example.sizeestimator
+package com.example.sizeestimator.domain
 
 import com.example.sizeestimator.ml.SsdMobilenetV1
 

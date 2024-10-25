@@ -1,4 +1,4 @@
-package com.example.sizeestimator
+package com.example.sizeestimator.data
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,6 +9,8 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.example.sizeestimator.domain.Analyser
+import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 import java.io.File

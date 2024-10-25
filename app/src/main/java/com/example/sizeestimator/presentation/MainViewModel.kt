@@ -1,4 +1,4 @@
-package com.example.sizeestimator
+package com.example.sizeestimator.presentation
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -6,7 +6,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.sizeestimator.LoresBitmap.AnalysisOptions
+import com.example.sizeestimator.data.LoresBitmap
+import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 @HiltViewModel

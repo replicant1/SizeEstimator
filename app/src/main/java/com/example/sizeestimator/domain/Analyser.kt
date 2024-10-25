@@ -1,10 +1,13 @@
-package com.example.sizeestimator
+package com.example.sizeestimator.domain
 
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.ml.SsdMobilenetV1
 
 /**
+ * Analyses the output of the Tensor Flow model and deduces an estimate for the
+ * actual size of the target object.
  * @param results output of the Tensor Flow model - bounding boxes with scores
  */
 class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
@@ -13,7 +16,7 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
     /**
      * Analyse the Tensor Flow results provided to constructor.
      */
-    fun analyse(options:LoresBitmap.AnalysisOptions): AnalysisResult {
+    fun analyse(options: LoresBitmap.AnalysisOptions): AnalysisResult {
         val referenceObjectIndex = findReferenceObject(options.minTop)
         val targetObjectIndex = findTargetObject(referenceObjectIndex)
         val targetObjectSizeMillimetres =
