@@ -3,7 +3,6 @@ package com.example.sizeestimator
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.camera.core.ImageCapture
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,21 +16,22 @@ class MainViewModel : ViewModel() {
     val sizeText: LiveData<String>
         get() = _sizeText
 
-    fun onImageSaved(
-        tempFilePath: String,
-        output: ImageCapture.OutputFileResults,
+    /**
+     * Invoked when hires camera image has been saved to app's cache directory and we are now
+     * ready to analyse it to give a measurement of the target object.
+     */
+    fun onHiresImageSaved(
+        hiresPath: String,
         context: Context
     ) {
-        Log.d(TAG, "** tempFilePath = $tempFilePath")
-        Log.d(TAG, "** output.savedUri = ${output.savedUri}")
         Log.d(TAG, "About to crop photo to size expected by tensor flow model")
-        val cameraImage = BitmapFactory.decodeFile(tempFilePath)
+        val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
         Log.d(
             TAG,
-            "Camera image: width=${cameraImage.width}, height=${cameraImage.height}"
+            "Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}"
         )
 
-        val loresBitmap = LoresBitmap.fromHiresBitmap(cameraImage)
+        val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
 
         if (loresBitmap != null) {
             Log.d(TAG, "Analysing the lores image")

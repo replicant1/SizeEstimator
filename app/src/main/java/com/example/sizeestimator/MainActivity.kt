@@ -2,21 +2,17 @@ package com.example.sizeestimator
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,7 +39,7 @@ class MainActivity : ComponentActivity() {
             // Handle Permission granted/rejected
             var permissionGranted = true
             permissions.entries.forEach {
-                if (it.key in REQUIRED_PERMISSIONS && it.value == false)
+                if (it.key in REQUIRED_PERMISSIONS && !it.value)
                     permissionGranted = false
             }
             if (!permissionGranted) {
@@ -62,9 +58,10 @@ class MainActivity : ComponentActivity() {
         val viewModel: MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
 
+        // Bind "Size" text field to viewModel
         viewModel.sizeText.observe(
-            this,
-            Observer<String> { value -> viewBinding.textView.text = value })
+            this
+        ) { value -> viewBinding.textView.text = value }
 
         setContentView(viewBinding.root)
 
@@ -75,20 +72,20 @@ class MainActivity : ComponentActivity() {
             requestPermissions()
         }
 
-        viewBinding.imageCaptureButton.setOnClickListener { takePhoto() }
+        viewBinding.imageCaptureButton.setOnClickListener { onMeasureButtonClicked() }
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
-    private fun takePhoto() {
+    private fun onMeasureButtonClicked() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
         try {
-            val tempFilePath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
-            Log.d(TAG, "tempFilePath = $tempFilePath")
+            val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
+            Log.d(TAG, "tempFilePath = $hiresPath")
 
-            val tempFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
-                File(tempFilePath)
+            val hiresFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
+                File(hiresPath)
             ).build()
 
             if (!application.cacheDir.exists()) {
@@ -98,24 +95,19 @@ class MainActivity : ComponentActivity() {
             // Set up image capture listener, which is triggered after photo has
             // been taken
             imageCapture.takePicture(
-                tempFileOutputOptions,
+                hiresFileOutputOptions,
                 ContextCompat.getMainExecutor(this),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
                         Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                     }
 
-                    @RequiresApi(Build.VERSION_CODES.O)
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
                         val viewModel: MainViewModel =
                             ViewModelProvider(this@MainActivity).get(MainViewModel::class.java)
-                        viewModel.onImageSaved(tempFilePath, output, applicationContext)
-
-                        Log.d(TAG, "Saved photo to ${output.savedUri}")
-
-
+                        viewModel.onHiresImageSaved(hiresPath, applicationContext)
                     }
                 }
             )
