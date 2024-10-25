@@ -2,7 +2,6 @@ package com.example.sizeestimator
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -17,8 +16,8 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.example.sizeestimator.LoresBitmap.AnalysisOptions
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -60,11 +59,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val viewModel : MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-//        Log.d(TAG, "viewModel = $viewModel")
-//        viewModel.hello()
-        enableEdgeToEdge()
+        val viewModel: MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
+
+        viewModel.sizeText.observe(
+            this,
+            Observer<String> { value -> viewBinding.textView.text = value })
+
         setContentView(viewBinding.root)
 
         // Request camera permissions
@@ -108,7 +109,8 @@ class MainActivity : ComponentActivity() {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
-                        val viewModel : MainViewModel = ViewModelProvider(this@MainActivity).get(MainViewModel::class.java)
+                        val viewModel: MainViewModel =
+                            ViewModelProvider(this@MainActivity).get(MainViewModel::class.java)
                         viewModel.onImageSaved(tempFilePath, output, applicationContext)
 
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
