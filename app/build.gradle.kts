@@ -58,9 +58,9 @@ android {
 
 dependencies {
     // Hilt dependencies
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    //ksp("com.google.dagger:hilt-android-compiler:2.48.1")
-//    androidTestImplementation("com.google.dagger:hilt-android-testing:2.48.1")
+    implementation(libs.hilt.android)
+
+    implementation(libs.androidx.runtime.livedata)
 
     //  CameraX
     implementation(libs.androidx.camera.core)
