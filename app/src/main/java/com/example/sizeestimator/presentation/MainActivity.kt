@@ -12,6 +12,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.sizeestimator.databinding.ActivityMainBinding
@@ -58,12 +59,13 @@ class MainActivity : ComponentActivity() {
         val viewModel: MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
 
-        // Bind "Size" text field to viewModel
-        viewModel.sizeText.observe(
-            this
-        ) { value -> viewBinding.textView.text = value }
-
         setContentView(viewBinding.root)
+
+        viewBinding.composeView.setContent {
+            MeasureButtonPanel(viewModel.sizeText.observeAsState().value) {
+                onMeasureButtonClicked()
+            }
+        }
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -72,7 +74,6 @@ class MainActivity : ComponentActivity() {
             requestPermissions()
         }
 
-        viewBinding.imageCaptureButton.setOnClickListener { onMeasureButtonClicked() }
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 

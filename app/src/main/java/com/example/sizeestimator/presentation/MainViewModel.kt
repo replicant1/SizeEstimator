@@ -13,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 @HiltViewModel
 class MainViewModel : ViewModel() {
 
+    // eg. "90 x 45 mm"
     val _sizeText = MutableLiveData<String>()
     val sizeText: LiveData<String>
         get() = _sizeText
@@ -49,7 +50,7 @@ class MainViewModel : ViewModel() {
 
             // Put result on screen
             _sizeText.value =
-                "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
+                "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
         } else {
             Log.d(TAG, "Failed to crop photo to size expected by tensor flow model")
         }
