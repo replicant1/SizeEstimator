@@ -11,8 +11,8 @@ import com.example.sizeestimator.ml.SsdMobilenetV1
  * actual size of the target object.
  * @param results output of the Tensor Flow model - bounding boxes with scores
  */
-class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
-    private val sortedResults = results.sortedByDescending { it.scoreAsFloat }
+class Analyser(private val results: List<TestableDetectionResult>) {
+    private val sortedResults = results.sortedByDescending { it.score }
 
     /**
      * Analyse the Tensor Flow results provided to constructor.
@@ -40,7 +40,7 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun findReferenceObject(minTop: Float): Int {
         sortedResults.forEachIndexed { index, result ->
-            if (result.locationAsRectF.top > minTop) {
+            if (result.location.top > minTop) {
                 return index
             }
         }
@@ -57,7 +57,7 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
     fun findTargetObject(referenceObjectIndex: Int): Int {
         val referenceObject = sortedResults[referenceObjectIndex]
         sortedResults.forEachIndexed { index, result ->
-            if (result.locationAsRectF.bottom < referenceObject.locationAsRectF.top) {
+            if (result.location.bottom < referenceObject.location.top) {
                 return index
             }
         }
@@ -77,18 +77,11 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
         val referenceObjectResult = sortedResults[referenceObjectIndex]
         val targetObjectResult = sortedResults[targetObjectIndex]
 
-        val referenceObjectWidthPx = referenceObjectResult.locationAsRectF.width()
+        val referenceObjectWidthPx = referenceObjectResult.location.width()
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 
-        val actualTargetObjectWidthMm = targetObjectResult.locationAsRectF.width() * mmPerPixel
-        val actualTargetObjectHeightMm = targetObjectResult.locationAsRectF.height() * mmPerPixel
-
-        Log.d(TAG, "Pixel width of reference object = $referenceObjectWidthPx")
-        Log.d(TAG, "Scale factor mmPerPixel = $mmPerPixel")
-        Log.d(
-            TAG,
-            "Target object size (mm): width = $actualTargetObjectWidthMm, height = $actualTargetObjectHeightMm"
-        )
+        val actualTargetObjectWidthMm = targetObjectResult.location.width() * mmPerPixel
+        val actualTargetObjectHeightMm = targetObjectResult.location.height() * mmPerPixel
 
         return Pair(actualTargetObjectWidthMm.toLong(), actualTargetObjectHeightMm.toLong())
     }
