@@ -26,7 +26,8 @@ The app contains only a single screen which is locked to landscape orientation f
 ![Usage](/doc/usage.jpg)
 
 To use the app:
-- Start the app and hold the device in landscape orientation.
+- Open the file `build.gradle.kts(:app)` and change the value of `buildConfigField` called `REFERENCE_OBJECT_WIDTH_MM` to the width of your reference object in millimetres.
+- Build and start the app and hold the device in landscape orientation.
 - Hold the device so that it looks down on a plane such as a table top
 - Position the reference object at the bottom of the preview frame. The reference object should be something long and thin like a pen. The true length of the reference object should already have been assigned to the constant `REFERENCE_OBJECT_WIDTH_MM` in `MainActivity.kt`
 - The reference object should be below the vertical mid-point of the preview image.
@@ -86,7 +87,7 @@ Estimated Size: 96 x 104 mm
 Due to time limitations there are a few changes I would have liked to make but was not able to:
 - There is a problem with the orientation of images from Camera X. When the device is in portrait orientation, the captured images are in landscape orientation. I would like to investigate this more thoroughly. I side-stepped it by locking the app to landscape orientation, in which mode this bug does not appear.
 - The files `lores.jpg` and `hires.jpg` are in the app's cache directory and are replaced every time the app is run, but they are not explicitly deleted at any time.
-- More tests - particularly instrumented tests. Measure statement coverage of tests.
+- Tests - didn't have time. Testing of Tensor Flow classes is difficult due to private constructor and mocked RectF object.
 - Accuracy of size estimates seems low - can anything be done to improve it? eg. lighting, contrast, alignment of objects.
 - Some sort of overlay on the preview image to help users position the reference object.
 - Ability to enter the real size of the reference object through the UI, rather than having to change the code.

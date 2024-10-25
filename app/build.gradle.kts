@@ -27,6 +27,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "123F")
+        }
+        debug {
+            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "123F")
         }
     }
     compileOptions {
@@ -40,6 +44,7 @@ android {
         compose = true
         mlModelBinding = true
         viewBinding = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

@@ -2,6 +2,7 @@ package com.example.sizeestimator.domain
 
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.ml.SsdMobilenetV1
 
@@ -77,7 +78,7 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
         val targetObjectResult = sortedResults[targetObjectIndex]
 
         val referenceObjectWidthPx = referenceObjectResult.locationAsRectF.width()
-        val mmPerPixel = REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
+        val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 
         val actualTargetObjectWidthMm = targetObjectResult.locationAsRectF.width() * mmPerPixel
         val actualTargetObjectHeightMm = targetObjectResult.locationAsRectF.height() * mmPerPixel
@@ -94,6 +95,5 @@ class Analyser(private val results: List<SsdMobilenetV1.DetectionResult>) {
 
     companion object {
         private val TAG = Analyser::class.java.simpleName
-        private const val REFERENCE_OBJECT_WIDTH_MM = 123F
     }
 }
