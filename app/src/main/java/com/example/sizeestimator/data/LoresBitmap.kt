@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.domain.Analyser
 import com.example.sizeestimator.domain.AnalysisResult
+import com.example.sizeestimator.domain.toRectF
+import com.example.sizeestimator.domain.toTestable
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 import java.io.File
@@ -28,7 +30,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(loresBitmap)
         val outputs = model.process(image)
-        val analyser = Analyser(outputs.detectionResultList)
+        val analyser = Analyser(outputs.detectionResultList.toTestable())
 
         model.close()
 
@@ -73,7 +75,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
                 rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
             }
             rectPaint.color = MARKUP_COLORS[index % MARKUP_COLORS.size]
-            canvas.drawRect(result.locationAsRectF, rectPaint)
+            canvas.drawRect(result.location.toRectF(), rectPaint)
         }
 
         // Draw the legend at top left of the image
@@ -91,7 +93,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
 
             textPaint.color = MARKUP_COLORS[index]
             canvas.drawText(
-                result.scoreAsFloat.toString(),
+                result.score.toString(),
                 25F,
                 20F + (index * 20),
                 textPaint

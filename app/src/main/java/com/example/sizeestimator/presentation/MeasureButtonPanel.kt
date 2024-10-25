@@ -36,7 +36,7 @@ fun MeasureButtonPanel(
         }
         Spacer(modifier = Modifier.weight(1F))
         Text(
-            text = "Size: $sizeText",
+            text = if (sizeText == null) "" else "Size: $sizeText",
             textAlign = TextAlign.Center,
             fontSize = 24.sp,
             modifier = Modifier.fillMaxWidth(1F))
@@ -48,4 +48,10 @@ fun MeasureButtonPanel(
 @Composable
 fun ButtonPanelPreview() {
 MeasureButtonPanel("90 x 90 mm") {  }
+}
+
+@Preview(widthDp = 300, heightDp = 300)
+@Composable
+fun ButtonPanelNullSizeTextPreview() {
+MeasureButtonPanel(null) { }
 }
