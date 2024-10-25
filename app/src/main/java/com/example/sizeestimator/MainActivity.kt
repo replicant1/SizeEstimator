@@ -17,15 +17,20 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.sizeestimator.LoresBitmap.AnalysisOptions
 import com.example.sizeestimator.databinding.ActivityMainBinding
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+
 /**
- * This code is taken substantially from the Google Codelab on Camera X.
+ * This code is taken substantially from the Google Codelab on Camera X:
+ * https://developer.android.com/codelabs/camerax-getting-started#0
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
@@ -55,6 +60,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        val viewModel : MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+//        Log.d(TAG, "viewModel = $viewModel")
+//        viewModel.hello()
         enableEdgeToEdge()
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
@@ -74,7 +82,6 @@ class MainActivity : ComponentActivity() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        // Create time stamped name and MediaStore entry.
         try {
             val tempFilePath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
             Log.d(TAG, "tempFilePath = $tempFilePath")
@@ -101,34 +108,12 @@ class MainActivity : ComponentActivity() {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         Log.d(TAG, "Saved photo to ${output.savedUri}")
 
-                        Log.d(TAG, "About to crop photo to size expected by tensor flow model")
-                        val cameraImage = BitmapFactory.decodeFile(tempFilePath)
-                        Log.d(
-                            TAG,
-                            "Camera image: width=${cameraImage.width}, height=${cameraImage.height}"
-                        )
+                        val viewModel : MainViewModel = ViewModelProvider(this@MainActivity).get(MainViewModel::class.java)
+                        viewModel.onImageSaved(tempFilePath, output, applicationContext)
 
-                        val loresBitmap = LoresBitmap.fromHiresBitmap(cameraImage)
+                        Log.d(TAG, "Saved photo to ${output.savedUri}")
 
-                        if (loresBitmap != null) {
-                            Log.d(TAG, "Analysing the lores image")
-                            val result = loresBitmap.analyse(
-                                this@MainActivity,
-                                AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F)
-                            )
 
-                            Log.d(TAG, "About to mark up lores image")
-                            loresBitmap.markup(result)
-
-                            // Save bitmap
-                            loresBitmap.save(applicationContext.cacheDir, LORES_FILENAME)
-
-                            // Put result on screen
-                            viewBinding.textView.text =
-                                "Size: ${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
-                        } else {
-                            Log.d(TAG, "Failed to crop photo to size expected by tensor flow model")
-                        }
                     }
                 }
             )
@@ -187,8 +172,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private val TAG = MainActivity::class.java.simpleName
-        private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA,).toTypedArray()
+        private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA).toTypedArray()
         private const val HIRES_FILENAME = "hires.jpg"
-        private const val LORES_FILENAME = "lores.jpg"
     }
 }
