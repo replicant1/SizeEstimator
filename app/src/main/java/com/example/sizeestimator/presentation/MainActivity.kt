@@ -61,6 +61,5 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA).toTypedArray()
-        private const val HIRES_FILENAME = "hires.jpg"
     }
 }

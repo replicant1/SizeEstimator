@@ -84,6 +84,7 @@ class MainViewModel : ViewModel() {
     }
 
     companion object {
-        private const val LORES_FILENAME = "lores.jpg"
+        const val LORES_FILENAME = "lores.jpg"
+        const val HIRES_FILENAME = "hires.jpg"
     }
 }
