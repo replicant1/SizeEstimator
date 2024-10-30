@@ -3,15 +3,11 @@ package com.example.sizeestimator.presentation
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -52,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
-                startCamera()
+//                startCamera()
             }
         }
 
@@ -64,16 +60,21 @@ class MainActivity : ComponentActivity() {
         setContentView(viewBinding.root)
 
         viewBinding.composeView.setContent {
-            MeasureButtonPanel(
+            SizeEstimatorScreen(
                 viewModel.sizeText.observeAsState().value,
-                viewModel.progressMonitorVisible.observeAsState().value) {
-                onMeasureButtonClicked()
-            }
+                viewModel.progressMonitorVisible.observeAsState().value,
+                ::onMeasureButtonClicked
+            )
+//            MeasureButtonPanel(
+//                viewModel.sizeText.observeAsState().value,
+//                viewModel.progressMonitorVisible.observeAsState().value) {
+//                onMeasureButtonClicked()
+//            }
         }
 
         // Request camera permissions
         if (allPermissionsGranted()) {
-            startCamera()
+//            startCamera()
         } else {
             requestPermissions()
         }
@@ -120,40 +121,40 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
-        cameraProviderFuture.addListener({
-            // Used to bind the lifecycle of cameras to the lifecycle owner
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-            // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(viewBinding.previewView.surfaceProvider)
-                }
-
-            imageCapture = ImageCapture.Builder().build()
-
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            try {
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture,
-                )
-
-            } catch (exc: Exception) {
-                Timber.e( "Use case binding failed", exc)
-            }
-
-        }, ContextCompat.getMainExecutor(this))
-    }
+//    private fun startCamera() {
+//        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+//
+//        cameraProviderFuture.addListener({
+//            // Used to bind the lifecycle of cameras to the lifecycle owner
+//            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+//
+//            // Preview
+//            val preview = Preview.Builder()
+//                .build()
+//                .also {
+//                    it.setSurfaceProvider(viewBinding.previewView.surfaceProvider)
+//                }
+//
+//            imageCapture = ImageCapture.Builder().build()
+//
+//            // Select back camera as a default
+//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//
+//            try {
+//                // Unbind use cases before rebinding
+//                cameraProvider.unbindAll()
+//
+//                // Bind use cases to camera
+//                cameraProvider.bindToLifecycle(
+//                    this, cameraSelector, preview, imageCapture,
+//                )
+//
+//            } catch (exc: Exception) {
+//                Timber.e( "Use case binding failed", exc)
+//            }
+//
+//        }, ContextCompat.getMainExecutor(this))
+//    }
 
     private fun requestPermissions() {
         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
