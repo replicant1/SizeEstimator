@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var viewModel : MainViewModel
+    private lateinit var viewModel: MainViewModel
 
     private val activityResultLauncher =
         registerForActivityResult(
@@ -46,11 +46,7 @@ class MainActivity : ComponentActivity() {
                     permissionGranted = false
             }
             if (!permissionGranted) {
-                Toast.makeText(
-                    baseContext,
-                    "Permission request denied",
-                    Toast.LENGTH_SHORT
-                ).show()
+                viewModel.onError("Permission request denied")
             } else {
                 startCamera()
             }
@@ -66,9 +62,10 @@ class MainActivity : ComponentActivity() {
         viewBinding.composeView.setContent {
             MeasureButtonPanel(
                 viewModel.sizeText.observeAsState().value,
-                viewModel.progressMonitorVisible.observeAsState().value) {
-                onMeasureButtonClicked()
-            }
+                viewModel.progressMonitorVisible.observeAsState().value,
+                { onMeasureButtonClicked() },
+                viewModel.errorFlow
+            )
         }
 
         // Request camera permissions
@@ -86,10 +83,12 @@ class MainActivity : ComponentActivity() {
         val imageCapture = imageCapture ?: return
 
         try {
+            // Progress monitor shown here and hidden in viewmodel after processing of captured
+            // image is done.
             viewModel.progressMonitorVisible.value = true
 
             val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
-            Timber.d( "tempFilePath = $hiresPath")
+            Timber.d("tempFilePath = $hiresPath")
 
             val hiresFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
                 File(hiresPath)
@@ -106,17 +105,16 @@ class MainActivity : ComponentActivity() {
                 ContextCompat.getMainExecutor(this),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
-                        Timber.e( "Photo capture failed: ${exc.message}", exc)
+                        viewModel.onError("Photo capture failed")
                     }
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        Timber.d( "Saved photo to ${output.savedUri}")
                         viewModel.onHiresImageSaved(hiresPath, applicationContext)
                     }
                 }
             )
         } catch (ie: RuntimeException) {
-            Timber.w( ie)
+            Timber.w(ie)
         }
     }
 
@@ -149,7 +147,7 @@ class MainActivity : ComponentActivity() {
                 )
 
             } catch (exc: Exception) {
-                Timber.e( "Use case binding failed", exc)
+                Timber.e("Use case binding failed", exc)
             }
 
         }, ContextCompat.getMainExecutor(this))
