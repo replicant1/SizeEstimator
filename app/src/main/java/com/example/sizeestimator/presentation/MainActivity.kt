@@ -86,6 +86,8 @@ class MainActivity : ComponentActivity() {
         val imageCapture = imageCapture ?: return
 
         try {
+            // Progress monitor shown here and hidden in viewmodel after processing of captured
+            // image is done.
             viewModel.progressMonitorVisible.value = true
 
             val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
