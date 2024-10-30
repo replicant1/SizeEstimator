@@ -21,13 +21,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 @Composable
 fun MeasureButtonPanel(
-    sizeText: String?,
-    progressMonitorVisible: Boolean?,
+    sizeText: LiveData<String>,
+    progressMonitorVisible: LiveData<Boolean>,
     onButtonClick: () -> Unit,
     errorFlow : Flow<String>
 ) {
@@ -41,9 +43,9 @@ fun MeasureButtonPanel(
             ).show()
         }
     }
-    Column(modifier = Modifier.background(Color.Green).padding(16.dp)) {
+    Column(modifier = Modifier.padding(16.dp)) {
         Button(
-            enabled = (progressMonitorVisible == false),
+            enabled = (progressMonitorVisible.value == false),
             shape = RoundedCornerShape(10.dp),
             onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
@@ -55,7 +57,7 @@ fun MeasureButtonPanel(
             Text(text = "Measure", fontSize = 24.sp)
         }
         Spacer(modifier = Modifier.weight(1F))
-        if (progressMonitorVisible == true) {
+        if (progressMonitorVisible.value == true) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,7 +65,7 @@ fun MeasureButtonPanel(
             )
         } else {
             Text(
-                text = if (sizeText == null) "" else "Size: $sizeText",
+                text = if (sizeText.value == null) "" else "Size: ${sizeText.value}",
                 textAlign = TextAlign.Center,
                 fontSize = 24.sp,
                 modifier = Modifier.fillMaxWidth(1F)
@@ -77,8 +79,8 @@ fun MeasureButtonPanel(
 @Composable
 fun ButtonPanelWithProgressPreview() {
     MeasureButtonPanel(
-        "90 x 90 mm",
-        progressMonitorVisible = true,
+        MutableLiveData("90 x 90 mm"),
+        progressMonitorVisible = MutableLiveData(true),
         {},
         flow { })
 }
@@ -87,8 +89,8 @@ fun ButtonPanelWithProgressPreview() {
 @Composable
 fun ButtonPanelNoProgressPreview() {
     MeasureButtonPanel(
-        "90 x 90 mm",
-        progressMonitorVisible = false,
+        MutableLiveData("90 x 90 mm"),
+        progressMonitorVisible = MutableLiveData(false),
         {},
         flow {})
 }

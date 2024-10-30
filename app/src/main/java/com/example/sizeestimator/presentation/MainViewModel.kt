@@ -71,6 +71,7 @@ class MainViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     _sizeText.value =
                         "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
+                    println("******* Changing size text to ${_sizeText.value}")
                 }
             } else {
                 errorChannel.send("Failed to process image")

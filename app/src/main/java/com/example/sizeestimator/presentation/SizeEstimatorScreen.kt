@@ -3,6 +3,7 @@ package com.example.sizeestimator.presentation
 import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.LifecycleCameraController
@@ -33,6 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.emptyFlow
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -42,12 +44,12 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    val cameraController = remember {
-        LifecycleCameraController(context).apply {
-            // Bind the LifecycleCameraController to the lifecycleOwner
-            bindToLifecycle(lifecycleOwner)
-        }
-    }
+//    val cameraController = remember {
+//        LifecycleCameraController(context).apply {
+//            // Bind the LifecycleCameraController to the lifecycleOwner
+//            bindToLifecycle(lifecycleOwner)
+//        }
+//    }
 
     val preview = Preview.Builder().build()
     val previewView = remember {
@@ -64,8 +66,7 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
         preview.setSurfaceProvider(previewView.surfaceProvider)
     }
     Row (modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Yellow)) {
+        .fillMaxSize()) {
 
         AndroidView(
             modifier = Modifier.weight(1F),
@@ -73,25 +74,41 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
                 previewView.apply {
                     scaleType = PreviewView.ScaleType.FIT_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                    controller = cameraController
+//                    controller = cameraController
                 }
             },
             onRelease = {
-                cameraController.unbind()
+                //cameraController.unbind()
             }
         )
 
-//        Box(modifier = Modifier.weight(1F).background(Color.Red
-//        )) {
-//            Text(modifier = Modifier.background(Color.Red), text = "")
-//        }
+        Box(modifier = Modifier.weight(1F)) {
+            MeasureButtonPanel(
+                sizeText = viewModel.sizeText,
+                progressMonitorVisible = viewModel.progressMonitorVisible,
+                {
+                    val hiresPath = context.cacheDir.absolutePath + File.separator + MainViewModel.HIRES_FILENAME
+                    val hiresOutputOptions = ImageCapture.OutputFileOptions.Builder(File(hiresPath))
+                        .build()
 
-        Box(modifier = Modifier.weight(1F).background(Color.Red)) {
-            MeasureButtonPanel(sizeText = "", progressMonitorVisible = false, {}, emptyFlow())
+                    imageCapture.takePicture(hiresOutputOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object: ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                viewModel.onHiresImageSaved(hiresPath, context)
+
+                            }
+
+                            override fun onError(exception: ImageCaptureException) {
+                                viewModel.onError("Photo capture failed")
+                            }
+                        })
+                },
+                viewModel.errorFlow)
         }
-
     }
 }
+
 
 private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
     suspendCoroutine { continuation ->
