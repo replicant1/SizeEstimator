@@ -24,14 +24,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -43,8 +39,6 @@ import kotlin.coroutines.suspendCoroutine
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
-    private var imageCapture: ImageCapture? = null
-    private lateinit var cameraExecutor: ExecutorService
     private lateinit var viewModel: MainViewModel
 
     private val activityResultLauncher =
@@ -52,7 +46,6 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.RequestMultiplePermissions()
         )
         { permissions ->
-            // Handle Permission granted/rejected
             var permissionGranted = true
             permissions.entries.forEach {
                 if (it.key in REQUIRED_PERMISSIONS && !it.value)
@@ -60,8 +53,6 @@ class MainActivity : ComponentActivity() {
             }
             if (!permissionGranted) {
                 viewModel.onError("Permission request denied")
-            } else {
-//                startCamera()
             }
         }
 
@@ -113,33 +104,24 @@ class MainActivity : ComponentActivity() {
                     viewModel.sizeText.observeAsState().value,
                     viewModel.progressMonitorVisible.observeAsState().value,
                     {
+                        viewModel.progressMonitorVisible.value = true
                         captureImage(imageCapture, context)
-                        //onMeasureButtonClicked()
                     },
                     viewModel.errorFlow
                 )
             }
         }
 
-        // Request camera permissions
-        if (allPermissionsGranted()) {
-//            startCamera()
-        } else {
+        if (!allPermissionsGranted()) {
             requestPermissions()
         }
-
-        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     private fun captureImage(imageCapture: ImageCapture, context: Context) {
-        val hiresPath = application.cacheDir.absolutePath + File.separator + "hires.jpg"
+        val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
         val hiresFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
             File(hiresPath)
         ).build()
-
-        if (!application.cacheDir.exists()) {
-            applicationContext.cacheDir.mkdir()
-        }
 
         imageCapture.takePicture(
             hiresFileOutputOptions,
@@ -166,92 +148,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-//    private fun onMeasureButtonClicked() {
-    // Get a stable reference of the modifiable image capture use case
-//        val imageCapture = imageCapture ?: return
-//
-//        try {
-//            // Progress monitor shown here and hidden in viewmodel after processing of captured
-//            // image is done.
-//            viewModel.progressMonitorVisible.value = true
-//
-//            val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
-//            Timber.d("tempFilePath = $hiresPath")
-//
-//            val hiresFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
-//                File(hiresPath)
-//            ).build()
-//
-//            if (!application.cacheDir.exists()) {
-//                applicationContext.cacheDir.mkdir()
-//            }
-//
-//            // Set up image capture listener, which is triggered after photo has
-//            // been taken
-//            imageCapture.takePicture(
-//                hiresFileOutputOptions,
-//                ContextCompat.getMainExecutor(this),
-//                object : ImageCapture.OnImageSavedCallback {
-//                    override fun onError(exc: ImageCaptureException) {
-//                        viewModel.onError("Photo capture failed")
-//                    }
-//
-//                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-//                        viewModel.onHiresImageSaved(hiresPath, applicationContext)
-//                    }
-//                }
-//            )
-//        } catch (ie: RuntimeException) {
-//            Timber.w(ie)
-//        }
-//    }
-
-//    private fun startCamera() {
-//        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-//
-//        cameraProviderFuture.addListener({
-//            // Used to bind the lifecycle of cameras to the lifecycle owner
-//            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-//
-//            // Preview
-////            val preview = Preview.Builder()
-////                .build()
-////                .also {
-//////                    it.setSurfaceProvider(viewBinding.previewView.surfaceProvider)
-////                }
-//
-//            imageCapture = ImageCapture.Builder().build()
-//
-//            // Select back camera as a default
-//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-//
-//            try {
-//                // Unbind use cases before rebinding
-//                cameraProvider.unbindAll()
-//
-//                // Bind use cases to camera
-//                cameraProvider.bindToLifecycle(
-//                    this, cameraSelector, /*preview,*/ imageCapture,
-//                )
-//
-//            } catch (exc: Exception) {
-//                Timber.e("Use case binding failed", exc)
-//            }
-//
-//        }, ContextCompat.getMainExecutor(this))
-//    }
-
     private fun requestPermissions() {
         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
     }
 
     companion object {
