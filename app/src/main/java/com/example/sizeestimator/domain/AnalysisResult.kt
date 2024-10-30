@@ -1,8 +1,6 @@
 package com.example.sizeestimator.domain
 
-import com.example.sizeestimator.ml.SsdMobilenetV1
-
-
+/** @see Analyser.analyse */
 data class AnalysisResult(
     val sortedResults: List<TestableDetectionResult>,
     val referenceObjectIndex: Int,

@@ -1,10 +1,9 @@
 package com.example.sizeestimator.domain
 
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.ml.SsdMobilenetV1
+import timber.log.Timber
 
 /**
  * Analyses the output of the Tensor Flow model and deduces an estimate for the
@@ -18,10 +17,15 @@ class Analyser(private val results: List<TestableDetectionResult>) {
      * Analyse the Tensor Flow results provided to constructor.
      */
     fun analyse(options: LoresBitmap.AnalysisOptions): AnalysisResult {
+        val analysisStartTime = System.currentTimeMillis()
         val referenceObjectIndex = findReferenceObject(options.minTop)
         val targetObjectIndex = findTargetObject(referenceObjectIndex)
         val targetObjectSizeMillimetres =
             calculateTargetObjectSize(referenceObjectIndex, targetObjectIndex)
+        val analysisEndTime = System.currentTimeMillis()
+
+        Timber.d("Analyser.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
+
         return AnalysisResult(
             sortedResults = sortedResults,
             referenceObjectIndex = referenceObjectIndex,
@@ -44,7 +48,7 @@ class Analyser(private val results: List<TestableDetectionResult>) {
                 return index
             }
         }
-        return -1
+        return UNKNOWN
     }
 
     /**
@@ -55,13 +59,16 @@ class Analyser(private val results: List<TestableDetectionResult>) {
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun findTargetObject(referenceObjectIndex: Int): Int {
+        if (referenceObjectIndex < 0 || referenceObjectIndex >= sortedResults.size) {
+            return UNKNOWN
+        }
         val referenceObject = sortedResults[referenceObjectIndex]
         sortedResults.forEachIndexed { index, result ->
             if (result.location.bottom < referenceObject.location.top) {
                 return index
             }
         }
-        return -1
+        return UNKNOWN
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -70,8 +77,8 @@ class Analyser(private val results: List<TestableDetectionResult>) {
         targetObjectIndex: Int
     ): Pair<Long, Long> {
 
-        if ((referenceObjectIndex == -1) || (targetObjectIndex == -1)) {
-            return Pair(-1L, -1L)
+        if ((referenceObjectIndex == UNKNOWN) || (targetObjectIndex == UNKNOWN)) {
+            return Pair(UNKNOWN.toLong(), UNKNOWN.toLong())
         }
 
         val referenceObjectResult = sortedResults[referenceObjectIndex]
@@ -87,6 +94,7 @@ class Analyser(private val results: List<TestableDetectionResult>) {
     }
 
     companion object {
-        private val TAG = Analyser::class.java.simpleName
+        const val UNKNOWN = -1
     }
+
 }

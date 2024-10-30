@@ -2,28 +2,34 @@ package com.example.sizeestimator.domain
 
 import android.graphics.RectF
 import com.example.sizeestimator.ml.SsdMobilenetV1
+import kotlin.math.abs
 
 /**
  * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor.
- * Also [RectF] property of [SsdMobilenetV1.DetectionResult.getLocationAsRectF] is mocked
- * for (test) source tree.
+
  */
 data class TestableDetectionResult(
     val score: Float,
     val location: BoundingBox,
-) {
-}
+)
 
+/**
+ * The [RectF] property of [SsdMobilenetV1.DetectionResult.getLocationAsRectF] is mocked
+ * for (test) source tree.
+ */
 data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val right: Float) {
     fun width(): Float {
-        return Math.abs(right - left)
+        return abs(right - left)
     }
 
     fun height(): Float {
-        return Math.abs(top - bottom)
+        return abs(top - bottom)
     }
 }
 
+/**
+ * Convert between models, information is preserved.
+ */
 fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<TestableDetectionResult> {
     return map {
         TestableDetectionResult(

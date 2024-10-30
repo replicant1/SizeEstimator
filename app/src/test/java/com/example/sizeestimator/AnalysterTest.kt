@@ -44,7 +44,7 @@ class AnalysterTest {
         val analyser = Analyser(detectedResults)
         val refIndex = analyser.findReferenceObject(150F)
 
-        assertEquals(-1, refIndex)
+        assertEquals(Analyser.UNKNOWN, refIndex)
     }
 
     @Test
@@ -154,5 +154,19 @@ class AnalysterTest {
 
         assertEquals(targetWidthMm.toLong(), analysisResult.targetObjectSizeMillimetres.first)
         assertEquals(targetHeightMm.toLong(), analysisResult.targetObjectSizeMillimetres.second)
+    }
+
+    @Test
+    fun `find target object when reference object was not found`() {
+        val target = TestableDetectionResult(
+            score = 0.9F,
+            location = BoundingBox(left = 10F, top = 10F, bottom = 100F, right = 200F)
+        )
+        val unsortedResults = listOf(target)
+        val analyser = Analyser(unsortedResults)
+        val result = analyser.findTargetObject(Analyser.UNKNOWN)
+
+        // Target object cannot be found unless reference object is found
+        assertEquals(Analyser.UNKNOWN, result)
     }
 }

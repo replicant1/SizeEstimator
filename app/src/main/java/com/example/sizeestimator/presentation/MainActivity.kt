@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.sizeestimator.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+    private lateinit var viewModel : MainViewModel
 
     private val activityResultLauncher =
         registerForActivityResult(
@@ -56,13 +58,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel: MainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         setContentView(viewBinding.root)
 
         viewBinding.composeView.setContent {
-            MeasureButtonPanel(viewModel.sizeText.observeAsState().value) {
+            MeasureButtonPanel(
+                viewModel.sizeText.observeAsState().value,
+                viewModel.progressMonitorVisible.observeAsState().value) {
                 onMeasureButtonClicked()
             }
         }
@@ -82,8 +86,10 @@ class MainActivity : ComponentActivity() {
         val imageCapture = imageCapture ?: return
 
         try {
+            viewModel.progressMonitorVisible.value = true
+
             val hiresPath = application.cacheDir.absolutePath + File.separator + HIRES_FILENAME
-            Log.d(TAG, "tempFilePath = $hiresPath")
+            Timber.d( "tempFilePath = $hiresPath")
 
             val hiresFileOutputOptions = ImageCapture.OutputFileOptions.Builder(
                 File(hiresPath)
@@ -100,20 +106,17 @@ class MainActivity : ComponentActivity() {
                 ContextCompat.getMainExecutor(this),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                        Timber.e( "Photo capture failed: ${exc.message}", exc)
                     }
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        Log.d(TAG, "Saved photo to ${output.savedUri}")
-
-                        val viewModel: MainViewModel =
-                            ViewModelProvider(this@MainActivity).get(MainViewModel::class.java)
+                        Timber.d( "Saved photo to ${output.savedUri}")
                         viewModel.onHiresImageSaved(hiresPath, applicationContext)
                     }
                 }
             )
         } catch (ie: RuntimeException) {
-            Log.w(TAG, ie)
+            Timber.w( ie)
         }
     }
 
@@ -146,7 +149,7 @@ class MainActivity : ComponentActivity() {
                 )
 
             } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+                Timber.e( "Use case binding failed", exc)
             }
 
         }, ContextCompat.getMainExecutor(this))
@@ -166,7 +169,6 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private val TAG = MainActivity::class.java.simpleName
         private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA).toTypedArray()
         private const val HIRES_FILENAME = "hires.jpg"
     }

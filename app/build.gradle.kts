@@ -57,9 +57,13 @@ android {
 }
 
 dependencies {
+    // Timber logging
+    implementation(libs.timber)
+
     // Hilt dependencies
     implementation(libs.hilt.android)
 
+    // LiveData
     implementation(libs.androidx.runtime.livedata)
 
     //  CameraX
@@ -70,6 +74,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.extensions)
 
+    // Constraint layout
     implementation(libs.androidx.constraintlayout)
 
     implementation(libs.androidx.core.ktx)
