@@ -77,6 +77,9 @@ dependencies {
     // Constraint layout
     implementation(libs.androidx.constraintlayout)
 
+    // UIAutomator
+    androidTestImplementation("com.android.support.test.uiautomator:uiautomator-v18:2.1.3")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
