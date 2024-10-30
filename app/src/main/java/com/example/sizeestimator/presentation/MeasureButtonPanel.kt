@@ -1,5 +1,6 @@
 package com.example.sizeestimator.presentation
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -11,19 +12,34 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 @Composable
 fun MeasureButtonPanel(
     sizeText: String?,
     progressMonitorVisible: Boolean?,
-    onButtonClick: () -> Unit
+    onButtonClick: () -> Unit,
+    errorFlow : Flow<String>
 ) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        errorFlow.collect { msg ->
+            Toast.makeText(
+                context,
+                msg,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
             enabled = (progressMonitorVisible == false),
@@ -61,11 +77,19 @@ fun MeasureButtonPanel(
 @Preview(widthDp = 300, heightDp = 300)
 @Composable
 fun ButtonPanelWithProgressPreview() {
-    MeasureButtonPanel("90 x 90 mm", progressMonitorVisible = true) { }
+    MeasureButtonPanel(
+        "90 x 90 mm",
+        progressMonitorVisible = true,
+        {},
+        flow { })
 }
 
 @Preview(widthDp = 300, heightDp = 300)
 @Composable
 fun ButtonPanelNoProgressPreview() {
-    MeasureButtonPanel("90 x 90 mm", progressMonitorVisible = false) { }
+    MeasureButtonPanel(
+        "90 x 90 mm",
+        progressMonitorVisible = false,
+        {},
+        flow {})
 }

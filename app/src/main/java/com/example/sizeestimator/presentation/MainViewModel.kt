@@ -10,6 +10,8 @@ import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -24,6 +26,16 @@ class MainViewModel : ViewModel() {
 
     // Is the progress monitor showing
     val progressMonitorVisible = MutableLiveData(false)
+
+    private var errorChannel = Channel<String>()
+    var errorFlow = errorChannel.receiveAsFlow()
+
+    fun onError(message: String) {
+        viewModelScope.launch {
+            errorChannel.send(message)
+            Timber.e(message)
+        }
+    }
 
     /**
      * Invoked when hires camera image has been saved to app's cache directory and we are now
@@ -61,6 +73,7 @@ class MainViewModel : ViewModel() {
                         "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
                 }
             } else {
+                errorChannel.send("Failed to process image")
                 Timber.d("Failed to crop photo to size expected by tensor flow model")
             }
 
