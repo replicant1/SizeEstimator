@@ -5,6 +5,7 @@ import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.ml.SsdMobilenetV1
+import timber.log.Timber
 
 /**
  * Analyses the output of the Tensor Flow model and deduces an estimate for the
@@ -18,10 +19,15 @@ class Analyser(private val results: List<TestableDetectionResult>) {
      * Analyse the Tensor Flow results provided to constructor.
      */
     fun analyse(options: LoresBitmap.AnalysisOptions): AnalysisResult {
+        val analysisStartTime = System.currentTimeMillis()
         val referenceObjectIndex = findReferenceObject(options.minTop)
         val targetObjectIndex = findTargetObject(referenceObjectIndex)
         val targetObjectSizeMillimetres =
             calculateTargetObjectSize(referenceObjectIndex, targetObjectIndex)
+        val analysisEndTime = System.currentTimeMillis()
+
+        Timber.d("Analyser.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
+
         return AnalysisResult(
             sortedResults = sortedResults,
             referenceObjectIndex = referenceObjectIndex,
@@ -86,7 +92,4 @@ class Analyser(private val results: List<TestableDetectionResult>) {
         return Pair(actualTargetObjectWidthMm.toLong(), actualTargetObjectHeightMm.toLong())
     }
 
-    companion object {
-        private val TAG = Analyser::class.java.simpleName
-    }
 }

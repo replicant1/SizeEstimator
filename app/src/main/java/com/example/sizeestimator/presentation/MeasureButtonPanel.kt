@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,39 +20,52 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun MeasureButtonPanel(
-    sizeText : String?,
-    onButtonClick : () -> Unit) {
+    sizeText: String?,
+    progressMonitorVisible: Boolean?,
+    onButtonClick: () -> Unit
+) {
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
+            enabled = (progressMonitorVisible == false),
             shape = RoundedCornerShape(10.dp),
             onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
                 contentColor = Color.White,
-                containerColor = Color.Blue),
+                containerColor = Color.Blue
+            ),
             modifier = Modifier
                 .fillMaxWidth(1F)
                 .fillMaxHeight(0.6F)
-        ){
+        ) {
             Text(text = "Measure", fontSize = 24.sp)
         }
         Spacer(modifier = Modifier.weight(1F))
-        Text(
-            text = if (sizeText == null) "" else "Size: $sizeText",
-            textAlign = TextAlign.Center,
-            fontSize = 24.sp,
-            modifier = Modifier.fillMaxWidth(1F))
+        if (progressMonitorVisible == true) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth(1F)
+                    .padding(horizontal = 4.dp)
+            )
+        } else {
+            Text(
+                text = if (sizeText == null) "" else "Size: $sizeText",
+                textAlign = TextAlign.Center,
+                fontSize = 24.sp,
+                modifier = Modifier.fillMaxWidth(1F)
+            )
+        }
         Spacer(modifier = Modifier.weight(1F))
     }
 }
 
 @Preview(widthDp = 300, heightDp = 300)
 @Composable
-fun ButtonPanelPreview() {
-MeasureButtonPanel("90 x 90 mm") {  }
+fun ButtonPanelWithProgressPreview() {
+    MeasureButtonPanel("90 x 90 mm", progressMonitorVisible = true) { }
 }
 
 @Preview(widthDp = 300, heightDp = 300)
 @Composable
-fun ButtonPanelNullSizeTextPreview() {
-MeasureButtonPanel(null) { }
+fun ButtonPanelNoProgressPreview() {
+    MeasureButtonPanel("90 x 90 mm", progressMonitorVisible = false) { }
 }

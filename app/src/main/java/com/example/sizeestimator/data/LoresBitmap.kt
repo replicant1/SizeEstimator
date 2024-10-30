@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.domain.Analyser
 import com.example.sizeestimator.domain.AnalysisResult
@@ -15,6 +14,7 @@ import com.example.sizeestimator.domain.toRectF
 import com.example.sizeestimator.domain.toTestable
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 
@@ -27,10 +27,14 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
     data class AnalysisOptions(val minTop: Float)
 
     fun analyse(context: Context, options: AnalysisOptions): AnalysisResult {
+        val analysisStartTime = System.currentTimeMillis()
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(loresBitmap)
         val outputs = model.process(image)
         val analyser = Analyser(outputs.detectionResultList.toTestable())
+        val analysisEndTime = System.currentTimeMillis()
+
+        Timber.d("LoresBitmap.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
 
         model.close()
 
@@ -113,17 +117,17 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
 
         val path = dir.absolutePath + File.separator + filename
 
-        Log.d(TAG, "About to save bitmap to file: $path")
+        Timber.d("About to save bitmap to file: %s", path)
 
         try {
             val fileOutputStream = FileOutputStream(path)
             loresBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
             fileOutputStream.close()
 
-            Log.d(TAG, "Wrote bitmap OK to file $path")
+            Timber.d("Wrote bitmap OK to file " + path)
 
         } catch (e: java.lang.Exception) {
-            Log.w(TAG, e)
+            Timber.w(e)
         }
     }
 
@@ -133,10 +137,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
          * down to the size that the TensorFlow model can process.
          */
         fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap? {
-            Log.d(
-                TAG,
-                "Cropping bitmap of width = ${hiresBitmap.width}, height = ${hiresBitmap.height}"
-            )
+            Timber.d("Cropping bitmap of width = ${hiresBitmap.width} + , height = ${hiresBitmap.height}")
 
             // Cropping this much off width should make image square
             // NOTE: Assuming width > height
@@ -149,24 +150,17 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
                 hiresBitmap.height
             )
 
-            Log.d(
-                TAG,
-                "Squared bitmap has width = ${squaredBitmap.width}, height = ${squaredBitmap.height}"
-            )
+            Timber.d("Squared bitmap has width = ${squaredBitmap.width} + height = ${squaredBitmap.height}")
 
             // Scale down to size expected by TensorFlow model
             val scaledSquareBitmap = Bitmap.createScaledBitmap(
                 squaredBitmap, LORES_IMAGE_SIZE_PX, LORES_IMAGE_SIZE_PX, false
             )
-            Log.d(
-                TAG,
-                "Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}"
-            )
+            Timber.d("Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}")
 
             return LoresBitmap(scaledSquareBitmap)
         }
 
-        private val TAG = LoresBitmap::class.java.simpleName
         const val LORES_IMAGE_SIZE_PX = 300
         val MARKUP_COLORS: List<Int> =
             listOf(

@@ -2,13 +2,17 @@ package com.example.sizeestimator.presentation
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @HiltViewModel
 class MainViewModel : ViewModel() {
@@ -18,6 +22,9 @@ class MainViewModel : ViewModel() {
     val sizeText: LiveData<String>
         get() = _sizeText
 
+    // Is the progress monitor showing
+    val progressMonitorVisible = MutableLiveData(false)
+
     /**
      * Invoked when hires camera image has been saved to app's cache directory and we are now
      * ready to analyse it to give a measurement of the target object.
@@ -26,38 +33,44 @@ class MainViewModel : ViewModel() {
         hiresPath: String,
         context: Context
     ) {
-        Log.d(TAG, "About to crop photo to size expected by tensor flow model")
-        val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
-        Log.d(
-            TAG,
-            "Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}"
-        )
+        progressMonitorVisible.value = true
 
-        val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
+        viewModelScope.launch(Dispatchers.Default) {
+            Timber.d("About to crop photo to size expected by tensor flow model")
+            val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
+            Timber.d("Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}")
 
-        if (loresBitmap != null) {
-            Log.d(TAG, "Analysing the lores image")
-            val result = loresBitmap.analyse(
-                context,
-                AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F) // vertical midpoint
-            )
+            val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
 
-            Log.d(TAG, "Add the bounding boxes and legend to the lores image")
-            loresBitmap.markup(result)
+            if (loresBitmap != null) {
+                Timber.d("Analysing the lores image")
+                val result = loresBitmap.analyse(
+                    context,
+                    AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F) // vertical midpoint
+                )
 
-            // Save bitmap
-            loresBitmap.save(context.cacheDir, LORES_FILENAME)
+                Timber.d("Add the bounding boxes and legend to the lores image")
+                loresBitmap.markup(result)
 
-            // Put result on screen
-            _sizeText.value =
-                "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
-        } else {
-            Log.d(TAG, "Failed to crop photo to size expected by tensor flow model")
+                // Save bitmap
+                loresBitmap.save(context.cacheDir, LORES_FILENAME)
+
+                // Put result on screen
+                withContext(Dispatchers.Main) {
+                    _sizeText.value =
+                        "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
+                }
+            } else {
+                Timber.d("Failed to crop photo to size expected by tensor flow model")
+            }
+
+            withContext(Dispatchers.Main) {
+                progressMonitorVisible.value = false
+            }
         }
     }
 
     companion object {
-        private val TAG = MainViewModel::class.java.simpleName
         private const val LORES_FILENAME = "lores.jpg"
     }
 }
