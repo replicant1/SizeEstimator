@@ -1,6 +1,7 @@
 package com.example.sizeestimator.presentation
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -40,7 +41,7 @@ fun MeasureButtonPanel(
             ).show()
         }
     }
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier.background(Color.Green).padding(16.dp)) {
         Button(
             enabled = (progressMonitorVisible == false),
             shape = RoundedCornerShape(10.dp),
@@ -49,9 +50,7 @@ fun MeasureButtonPanel(
                 contentColor = Color.White,
                 containerColor = Color.Blue
             ),
-            modifier = Modifier
-                .fillMaxWidth(1F)
-                .fillMaxHeight(0.6F)
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6F)
         ) {
             Text(text = "Measure", fontSize = 24.sp)
         }
@@ -59,7 +58,7 @@ fun MeasureButtonPanel(
         if (progressMonitorVisible == true) {
             LinearProgressIndicator(
                 modifier = Modifier
-                    .fillMaxWidth(1F)
+                    .fillMaxWidth()
                     .padding(horizontal = 4.dp)
             )
         } else {

@@ -10,19 +10,28 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester.Companion.createRefs
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.flow.emptyFlow
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -54,13 +63,15 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
         cameraProvider.bindToLifecycle(lifecycleOwner, cameraxSelector, preview, imageCapture)
         preview.setSurfaceProvider(previewView.surfaceProvider)
     }
+    Row (modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Yellow)) {
 
-    Row (modifier = Modifier.fillMaxSize().background(Color.Yellow)) {
         AndroidView(
-            modifier = Modifier.size(300.dp),
+            modifier = Modifier.weight(1F),
             factory = { ctx ->
                 previewView.apply {
-                    scaleType = PreviewView.ScaleType.FILL_START
+                    scaleType = PreviewView.ScaleType.FIT_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
                     controller = cameraController
                 }
@@ -69,6 +80,15 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
                 cameraController.unbind()
             }
         )
+
+//        Box(modifier = Modifier.weight(1F).background(Color.Red
+//        )) {
+//            Text(modifier = Modifier.background(Color.Red), text = "")
+//        }
+
+        Box(modifier = Modifier.weight(1F).background(Color.Red)) {
+            MeasureButtonPanel(sizeText = "", progressMonitorVisible = false, {}, emptyFlow())
+        }
 
     }
 }
