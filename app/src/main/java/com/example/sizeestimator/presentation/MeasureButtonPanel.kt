@@ -1,7 +1,6 @@
 package com.example.sizeestimator.presentation
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,6 +13,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -43,9 +43,10 @@ fun MeasureButtonPanel(
             ).show()
         }
     }
+    val progressState = progressMonitorVisible.observeAsState()
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
-            enabled = (progressMonitorVisible.value == false),
+            enabled = (progressState.value == false),
             shape = RoundedCornerShape(10.dp),
             onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
@@ -57,15 +58,16 @@ fun MeasureButtonPanel(
             Text(text = "Measure", fontSize = 24.sp)
         }
         Spacer(modifier = Modifier.weight(1F))
-        if (progressMonitorVisible.value == true) {
+        if (progressState.value == true) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp)
             )
         } else {
+            val sizeTextState = sizeText.observeAsState()
             Text(
-                text = if (sizeText.value == null) "" else "Size: ${sizeText.value}",
+                text = if (sizeTextState.value == null) "" else "Size: ${sizeTextState.value}",
                 textAlign = TextAlign.Center,
                 fontSize = 24.sp,
                 modifier = Modifier.fillMaxWidth(1F)
