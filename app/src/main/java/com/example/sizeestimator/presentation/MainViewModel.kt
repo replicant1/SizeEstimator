@@ -59,7 +59,7 @@ class MainViewModel : ViewModel() {
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
             Timber.d("Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}")
 
-            val loresBitmap = LoresBitmap.fromHiresBitmap(context.cacheDir, hiresBitmap)
+            val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
 
             if (loresBitmap != null) {
                 Timber.d("Analysing the lores image")
@@ -82,7 +82,6 @@ class MainViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     _sizeText.value =
                         "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
-                    println("******* Changing size text to ${_sizeText.value}")
                 }
             } else {
                 errorChannel.send("Failed to process image")

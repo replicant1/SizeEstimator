@@ -26,6 +26,9 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
+/**
+ * The right side of the interface - contains "Measure" button, progress bar, output text field.
+ */
 @Composable
 fun MeasureButtonPanel(
     sizeText: LiveData<String>,
@@ -77,7 +80,7 @@ fun MeasureButtonPanel(
     }
 }
 
-@Preview(widthDp = 300, heightDp = 300)
+@Preview(widthDp = 200, heightDp = 300)
 @Composable
 fun ButtonPanelWithProgressPreview() {
     MeasureButtonPanel(
@@ -87,7 +90,7 @@ fun ButtonPanelWithProgressPreview() {
         flow { })
 }
 
-@Preview(widthDp = 300, heightDp = 300)
+@Preview(widthDp = 200, heightDp = 300)
 @Composable
 fun ButtonPanelNoProgressPreview() {
     MeasureButtonPanel(

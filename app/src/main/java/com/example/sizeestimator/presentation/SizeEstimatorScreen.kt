@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +33,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.domain.BoundingBox
+import timber.log.Timber
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -45,6 +44,8 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
+    // Preview, ImageCapture and PreviewView must all be 4:3 for what's on the screen
+    // and what is analysed by the Tensor Flow model to all correspond.
     val preview = Preview.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3).build()
     val previewView = remember {
         PreviewView(context)
@@ -61,21 +62,16 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     }
 
     val analysisResultState = analysisResult.observeAsState()
-    println("**** analysisResultState.value = ${analysisResultState.value}")
-
+    Timber.d("analysisResultState.value = ${analysisResultState.value}")
 
     val referenceBox = remember {
         derivedStateOf {
             val sortedResults = analysisResultState.value?.sortedResults
-            println("**** sortedresults = $sortedResults")
             val referenceObjectIndex = analysisResultState.value?.referenceObjectIndex
-            println("*** referenceObjectIndex = $referenceObjectIndex")
             var boundingBox: BoundingBox? = null
             if ((sortedResults != null) && (referenceObjectIndex != null) && (referenceObjectIndex != -1)) {
                 val referenceObject = sortedResults[referenceObjectIndex]
-                println("*** referenceObject = $referenceObject")
                 boundingBox = referenceObject.location
-                println("*** boundingBox = $boundingBox")
             }
             return@derivedStateOf boundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
         }
@@ -94,102 +90,84 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         }
     }
 
-
     Row(
         modifier = Modifier
             .fillMaxSize()
     ) {
 
-        if (analysisResultState.value != null) {
-            println("** new analysisresultState.value ")
-        }
-
-        if (referenceBox.value != null) {
-            println("** new binky = ${referenceBox.value}")
-        }
-
         AndroidView(
             modifier = Modifier
-                .aspectRatio(4f / 3f)
+                .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
                 .drawWithContent {
                     drawContent()
-                    val centerX = size.width / 2
-                    val centerY = size.height / 2
-                    val targetSize = 50f
-                    val strokeWidth = 4f
+                    val centerXPx = size.width / 2
+                    val centerYPx = size.height / 2
+                    val targetSizePx = 50f
+                    val targetStrokeWidth = 4f
                     val targetColor = Color.Blue
+
                     // Horizontal stroke of the cross-hair
                     drawLine(
                         targetColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(centerX - targetSize, centerY),
-                        end = Offset(centerX + targetSize, centerY)
+                        strokeWidth = targetStrokeWidth,
+                        start = Offset(centerXPx - targetSizePx, centerYPx),
+                        end = Offset(centerXPx + targetSizePx, centerYPx)
                     )
                     // Vertical stroke of the cross-hair
                     drawLine(
                         targetColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(centerX, centerY - targetSize),
-                        end = Offset(centerX, centerY + targetSize)
+                        strokeWidth = targetStrokeWidth,
+                        start = Offset(centerXPx, centerYPx - targetSizePx),
+                        end = Offset(centerXPx, centerYPx + targetSizePx)
                     )
-                    drawLine(
-                        targetColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width, size.height)
-                    )
-                    drawLine(
-                        targetColor,
-                        strokeWidth = strokeWidth,
-                        start = Offset(size.width, 0f),
-                        end = Offset(0f, size.height)
-                    )
-//                    println("** size.width = ${size.width}, size.height=${size.height}")
+
+                    // Square that anticipates the lores bitmap that
+                    // will ultimately be promised by the Tensor Flow model.
+                    // Reference and target objects should be positioned within this.
                     if (size.width >= size.height) {
                         drawRect(
-                            color = Color.Gray,
+                            color = Color.Blue,
                             topLeft = Offset(
-                                centerX - (size.height / 2),
-                                centerY - (size.height / 2)
+                                centerXPx - (size.height / 2),
+                                centerYPx - (size.height / 2)
                             ),
                             size = Size(size.height, size.height),
-                            style = Stroke(width = 2f)
+                            style = Stroke(width = targetStrokeWidth)
                         )
                     }
 
+                    // Scale factor for analysis result -> preview view
                     val loresToPreview = size.height / 300f
-//                    val boxXOffset = 0//size.width - size.height / 2
+                    val boxXOffsetPx = ( size.width - size.height) / 2
+                    val boxStrokeWidthPx = 4f
 
-                    val boxXOffset = ( size.width - size.height) / 2
-
-
+                    // Bounding box of the reference object as per analysis
                     drawRect(
                         color = Color.Red,
                         topLeft = Offset(
-                            boxXOffset + referenceBox.value.left * loresToPreview,
+                            boxXOffsetPx + referenceBox.value.left * loresToPreview,
                              referenceBox.value.top * loresToPreview
                         ),
                         size = Size(
                              referenceBox.value.width() * loresToPreview,
                               referenceBox.value.height() * loresToPreview
                         ),
-                        style = Stroke(width = 4f)
+                        style = Stroke(width = boxStrokeWidthPx)
                     )
 
+                    // Bounding box of the target object as per analysis
                     drawRect(
-                        color = Color.Blue,
+                        color = Color.Green,
                         topLeft = Offset(
-                            boxXOffset + targetBox.value.left * loresToPreview,
+                            boxXOffsetPx + targetBox.value.left * loresToPreview,
                              targetBox.value.top * loresToPreview
                         ),
                         size = Size(
                              targetBox.value.width() * loresToPreview,
                              targetBox.value.height() * loresToPreview
                         ),
-                        style = Stroke(width = 4f)
+                        style = Stroke(width = boxStrokeWidthPx)
                     )
-//                    println("previewView width x height = ${previewView.width} x ${previewView.height}")
-//                    println("previewView.viewPort.aspectRatio = ${previewView.viewPort?.aspectRatio}")
                 },
             factory = { ctx ->
                 previewView.apply {

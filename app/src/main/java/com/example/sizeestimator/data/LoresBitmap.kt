@@ -136,7 +136,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
          * Take a landscape orientation image straight off the preview image and scale/crop it
          * down to the size that the TensorFlow model can process.
          */
-        fun fromHiresBitmap(cacheDir:File, hiresBitmap: Bitmap): LoresBitmap? {
+        fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap? {
             Timber.d("Cropping bitmap of width = ${hiresBitmap.width} + , height = ${hiresBitmap.height}")
 
             // Cropping this much off width should make image square
@@ -149,8 +149,6 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
                 hiresBitmap.height,
                 hiresBitmap.height
             )
-
-            LoresBitmap(squaredBitmap).save(cacheDir, "medium.jpg" )
 
             Timber.d("Squared bitmap has width = ${squaredBitmap.width} + height = ${squaredBitmap.height}")
 
