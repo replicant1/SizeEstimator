@@ -13,6 +13,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,13 +21,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 @Composable
 fun MeasureButtonPanel(
-    sizeText: String?,
-    progressMonitorVisible: Boolean?,
+    sizeText: LiveData<String>,
+    progressMonitorVisible: LiveData<Boolean>,
     onButtonClick: () -> Unit,
     errorFlow : Flow<String>
 ) {
@@ -40,31 +43,31 @@ fun MeasureButtonPanel(
             ).show()
         }
     }
+    val progressState = progressMonitorVisible.observeAsState()
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
-            enabled = (progressMonitorVisible == false),
+            enabled = (progressState.value == false),
             shape = RoundedCornerShape(10.dp),
             onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
                 contentColor = Color.White,
                 containerColor = Color.Blue
             ),
-            modifier = Modifier
-                .fillMaxWidth(1F)
-                .fillMaxHeight(0.6F)
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6F)
         ) {
             Text(text = "Measure", fontSize = 24.sp)
         }
         Spacer(modifier = Modifier.weight(1F))
-        if (progressMonitorVisible == true) {
+        if (progressState.value == true) {
             LinearProgressIndicator(
                 modifier = Modifier
-                    .fillMaxWidth(1F)
+                    .fillMaxWidth()
                     .padding(horizontal = 4.dp)
             )
         } else {
+            val sizeTextState = sizeText.observeAsState()
             Text(
-                text = if (sizeText == null) "" else "Size: $sizeText",
+                text = if (sizeTextState.value == null) "" else "Size: ${sizeTextState.value}",
                 textAlign = TextAlign.Center,
                 fontSize = 24.sp,
                 modifier = Modifier.fillMaxWidth(1F)
@@ -78,8 +81,8 @@ fun MeasureButtonPanel(
 @Composable
 fun ButtonPanelWithProgressPreview() {
     MeasureButtonPanel(
-        "90 x 90 mm",
-        progressMonitorVisible = true,
+        MutableLiveData("90 x 90 mm"),
+        progressMonitorVisible = MutableLiveData(true),
         {},
         flow { })
 }
@@ -88,8 +91,8 @@ fun ButtonPanelWithProgressPreview() {
 @Composable
 fun ButtonPanelNoProgressPreview() {
     MeasureButtonPanel(
-        "90 x 90 mm",
-        progressMonitorVisible = false,
+        MutableLiveData("90 x 90 mm"),
+        progressMonitorVisible = MutableLiveData(false),
         {},
         flow {})
 }
