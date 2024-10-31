@@ -73,7 +73,7 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                 boundingBox = referenceObject.location
                 println("*** boundingBox = $boundingBox")
             }
-            return@derivedStateOf boundingBox ?: BoundingBox(0f, 0f, 0f, 0f)
+            return@derivedStateOf boundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
         }
     }
 
@@ -125,12 +125,20 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                         )
                     }
 
+                    val loresToPreview = size.height / 300f
 
-                        drawRect(
-                            color = Color.Red,
-                            topLeft = Offset(binky.value.left, binky.value.top),
-                            size = Size(binky.value.width(),binky.value.height())
-                        )
+
+                    drawRect(
+                        color = Color.Red,
+                        topLeft = Offset(
+                            binky.value.left * loresToPreview,
+                            binky.value.top * loresToPreview
+                        ),
+                        size = Size(
+                            binky.value.width() * loresToPreview,
+                            binky.value.height() * loresToPreview),
+                        style = Stroke(width = 2f)
+                    )
 
 
 //                if (viewModel.analysisResult.observeAsState()) {
