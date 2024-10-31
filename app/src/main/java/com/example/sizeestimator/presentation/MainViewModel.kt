@@ -61,17 +61,21 @@ class MainViewModel : ViewModel() {
                     AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F) // vertical midpoint
                 )
 
-                Timber.d("Add the bounding boxes and legend to the lores image")
-                loresBitmap.markup(result)
+                if (result != null) {
+                    Timber.d("Add the bounding boxes and legend to the lores image")
+                    loresBitmap.markup(result)
+                }
 
                 // Save bitmap
                 loresBitmap.save(context.cacheDir, LORES_FILENAME)
 
                 // Put result on screen
-                withContext(Dispatchers.Main) {
-                    _sizeText.value =
-                        "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
-                    println("******* Changing size text to ${_sizeText.value}")
+                if (result != null) {
+                    withContext(Dispatchers.Main) {
+                        _sizeText.value =
+                            "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
+                        Timber.d("Changing size text to ${_sizeText.value}")
+                    }
                 }
             } else {
                 errorChannel.send("Failed to process image")

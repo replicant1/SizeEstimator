@@ -10,6 +10,7 @@ import android.graphics.Typeface
 import androidx.annotation.VisibleForTesting
 import com.example.sizeestimator.domain.Analyser
 import com.example.sizeestimator.domain.AnalysisResult
+import com.example.sizeestimator.domain.SortedResultList
 import com.example.sizeestimator.domain.toRectF
 import com.example.sizeestimator.domain.toTestable
 import com.example.sizeestimator.ml.SsdMobilenetV1
@@ -26,12 +27,16 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
 
     data class AnalysisOptions(val minTop: Float)
 
-    fun analyse(context: Context, options: AnalysisOptions): AnalysisResult {
+    /**
+     * @return result of feeding the [loresBitmap] into the Tensor Flow model. null if analysis fails.
+     */
+    fun analyse(context: Context, options: AnalysisOptions): AnalysisResult? {
         val analysisStartTime = System.currentTimeMillis()
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(loresBitmap)
         val outputs = model.process(image)
-        val analyser = Analyser(outputs.detectionResultList.toTestable())
+        val sortedResults = SortedResultList(outputs.detectionResultList.toTestable())
+        val analyser = Analyser(sortedResults)
         val analysisEndTime = System.currentTimeMillis()
 
         Timber.d("LoresBitmap.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
@@ -70,7 +75,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
         // Copy mutable bitmap to the canvas so that we can draw on top of it
         canvas.drawBitmap(loresBitmap, 0F, 0F, rectPaint)
 
-        analysisResult.sortedResults.forEachIndexed { index: Int, result ->
+        analysisResult.sortedResults.sortedResultList.forEachIndexed { index: Int, result ->
             // Make the bounding boxes for reference and target objects standout as solid while
             // others are dashed.
             if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
@@ -83,7 +88,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
         }
 
         // Draw the legend at top left of the image
-        analysisResult.sortedResults.forEachIndexed { index, result ->
+        analysisResult.sortedResults.sortedResultList.forEachIndexed { index, result ->
             legendPaint.color = MARKUP_COLORS[index]
             canvas.drawRect(
                 android.graphics.Rect(
