@@ -6,34 +6,24 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester.Companion.createRefs
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlinx.coroutines.flow.emptyFlow
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -43,13 +33,6 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
     val lensFacing = CameraSelector.LENS_FACING_BACK
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-
-//    val cameraController = remember {
-//        LifecycleCameraController(context).apply {
-//            // Bind the LifecycleCameraController to the lifecycleOwner
-//            bindToLifecycle(lifecycleOwner)
-//        }
-//    }
 
     val preview = Preview.Builder().build()
     val previewView = remember {
@@ -69,16 +52,38 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
         .fillMaxSize()) {
 
         AndroidView(
-            modifier = Modifier.weight(1F),
-            factory = { ctx ->
-                previewView.apply {
-                    scaleType = PreviewView.ScaleType.FIT_CENTER
-                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-//                    controller = cameraController
+            modifier = Modifier.weight(1F).drawWithContent {
+                drawContent()
+                val centerX = size.width / 2
+                val centerY = size.height / 2
+                val targetSize = 50f
+                val strokeWidth = 4f
+                val targetColor = Color.Blue
+                drawLine(
+                    targetColor,
+                    strokeWidth = strokeWidth,
+                    start = Offset(centerX - targetSize, centerY),
+                    end = Offset(centerX + targetSize, centerY))
+                drawLine(
+                    targetColor,
+                    strokeWidth = strokeWidth,
+                    start = Offset(centerX, centerY - targetSize),
+                    end = Offset(centerX, centerY + targetSize)
+                )
+                if (size.width >= size.height) {
+                    drawRect(
+                        color = Color.Gray,
+                        topLeft = Offset(centerX - (size.height / 2), centerY - (size.height / 2)),
+                        size = Size(size.height, size.height),
+                        style = Stroke(width = 2f)
+                    )
                 }
             },
-            onRelease = {
-                //cameraController.unbind()
+            factory = { ctx ->
+                previewView.apply {
+                    scaleType = PreviewView.ScaleType.FILL_END
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                }
             }
         )
 
