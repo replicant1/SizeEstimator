@@ -59,7 +59,7 @@ class MainViewModel : ViewModel() {
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
             Timber.d("Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}")
 
-            val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
+            val loresBitmap = LoresBitmap.fromHiresBitmap(context.cacheDir, hiresBitmap)
 
             if (loresBitmap != null) {
                 Timber.d("Analysing the lores image")

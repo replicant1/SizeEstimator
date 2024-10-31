@@ -1,6 +1,7 @@
 package com.example.sizeestimator.presentation
 
 import android.content.Context
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -10,6 +11,9 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -21,7 +25,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
@@ -38,13 +44,13 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    val preview = Preview.Builder().build()
+    val preview = Preview.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3).build()
     val previewView = remember {
         PreviewView(context)
     }
     val cameraxSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
     val imageCapture = remember {
-        ImageCapture.Builder().build()
+        ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3).build()
     }
     LaunchedEffect(lensFacing) {
         val cameraProvider = context.getCameraProvider()
@@ -103,7 +109,6 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
 
         AndroidView(
             modifier = Modifier
-                .weight(1F)
                 .drawWithContent {
                     drawContent()
                     val centerX = size.width / 2
@@ -111,18 +116,33 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                     val targetSize = 50f
                     val strokeWidth = 4f
                     val targetColor = Color.Blue
+                    // Horizontal stroke of the cross-hair
                     drawLine(
                         targetColor,
                         strokeWidth = strokeWidth,
                         start = Offset(centerX - targetSize, centerY),
                         end = Offset(centerX + targetSize, centerY)
                     )
+                    // Vertical stroke of the cross-hair
                     drawLine(
                         targetColor,
                         strokeWidth = strokeWidth,
                         start = Offset(centerX, centerY - targetSize),
                         end = Offset(centerX, centerY + targetSize)
                     )
+                    drawLine(
+                        targetColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(0f, 0f),
+                        end = Offset(size.width, size.height)
+                    )
+                    drawLine(
+                        targetColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(size.width, 0f),
+                        end = Offset(0f, size.height)
+                    )
+//                    println("** size.width = ${size.width}, size.height=${size.height}")
                     if (size.width >= size.height) {
                         drawRect(
                             color = Color.Gray,
@@ -136,16 +156,20 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                     }
 
                     val loresToPreview = size.height / 300f
+//                    val boxXOffset = 0//size.width - size.height / 2
+
+                    val boxXOffset = ( size.width - size.height) / 2
+
 
                     drawRect(
                         color = Color.Red,
                         topLeft = Offset(
-                            referenceBox.value.left * loresToPreview,
-                            referenceBox.value.top * loresToPreview
+                            boxXOffset + referenceBox.value.left * loresToPreview,
+                             referenceBox.value.top * loresToPreview
                         ),
                         size = Size(
-                            referenceBox.value.width() * loresToPreview,
-                            referenceBox.value.height() * loresToPreview
+                             referenceBox.value.width() * loresToPreview,
+                              referenceBox.value.height() * loresToPreview
                         ),
                         style = Stroke(width = 4f)
                     )
@@ -153,47 +177,28 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                     drawRect(
                         color = Color.Blue,
                         topLeft = Offset(
-                            targetBox.value.left * loresToPreview,
-                            targetBox.value.top * loresToPreview
+                            boxXOffset + targetBox.value.left * loresToPreview,
+                             targetBox.value.top * loresToPreview
                         ),
                         size = Size(
-                            targetBox.value.width() * loresToPreview,
-                            targetBox.value.height() * loresToPreview
+                             targetBox.value.width() * loresToPreview,
+                             targetBox.value.height() * loresToPreview
                         ),
                         style = Stroke(width = 4f)
                     )
-
-
-//                if (viewModel.analysisResult.observeAsState()) {
-//                    println("*** Drawing reference object box ****")
-//                    val analysisResult = viewModel.analysisResult.value
-//                    if (analysisResult != null) {
-//                        val referenceObjectIndex = analysisResult.referenceObjectIndex
-//                        val targetObjectIndex = analysisResult.targetObjectIndex
-//                        if (referenceObjectIndex != Analyser.UNKNOWN) {
-//                            val refBox = analysisResult.sortedResults[referenceObjectIndex].location
-//                            drawRect(
-//                                color = Color.Red,
-//                                topLeft = Offset(refBox.left, refBox.top),
-//                                size = Size(refBox.right - refBox.left, refBox.bottom - refBox.top),
-//                                style = Stroke(width = 2f)
-//                            )
-//                        }
-//                        if (targetObjectIndex != -1) {
-//                            val targetObject = analysisResult.sortedResults[targetObjectIndex]
-//                        }
-//                    }
-//                }
+//                    println("previewView width x height = ${previewView.width} x ${previewView.height}")
+//                    println("previewView.viewPort.aspectRatio = ${previewView.viewPort?.aspectRatio}")
                 },
             factory = { ctx ->
                 previewView.apply {
-                    scaleType = PreviewView.ScaleType.FILL_END
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                    setBackgroundColor(Color.Yellow.toArgb())
                 }
             }
         )
 
-        Box(modifier = Modifier.weight(1F)) {
+        Box(modifier = Modifier.weight(1F).size(100.dp)) {
             MeasureButtonPanel(
                 sizeText = viewModel.sizeText,
                 progressMonitorVisible = viewModel.progressMonitorVisible,
