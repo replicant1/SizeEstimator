@@ -44,6 +44,7 @@ fun MeasureButtonPanel(
         }
     }
     val progressState = progressMonitorVisible.observeAsState()
+    val sizeTextState = sizeText.observeAsState()
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
             enabled = (progressState.value == false),
@@ -65,7 +66,6 @@ fun MeasureButtonPanel(
                     .padding(horizontal = 4.dp)
             )
         } else {
-            val sizeTextState = sizeText.observeAsState()
             Text(
                 text = if (sizeTextState.value == null) "" else "Size: ${sizeTextState.value}",
                 textAlign = TextAlign.Center,

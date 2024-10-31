@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
+import com.example.sizeestimator.domain.AnalysisResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -20,12 +21,18 @@ import timber.log.Timber
 class MainViewModel : ViewModel() {
 
     // eg. "90 x 45 mm"
-    val _sizeText = MutableLiveData<String>()
+    private val _sizeText = MutableLiveData<String>()
     val sizeText: LiveData<String>
         get() = _sizeText
 
     // Is the progress monitor showing
-    val progressMonitorVisible = MutableLiveData(false)
+    private val _progressMonitorVisible = MutableLiveData(false)
+    val progressMonitorVisible: LiveData<Boolean>
+        get() = _progressMonitorVisible
+
+    private val _analysisResult = MutableLiveData<AnalysisResult>()
+    val analysisResult: LiveData<AnalysisResult>
+        get() = _analysisResult
 
     private var errorChannel = Channel<String>()
     var errorFlow = errorChannel.receiveAsFlow()
@@ -45,7 +52,7 @@ class MainViewModel : ViewModel() {
         hiresPath: String,
         context: Context
     ) {
-        progressMonitorVisible.value = true
+        _progressMonitorVisible.value = true
 
         viewModelScope.launch(Dispatchers.Default) {
             Timber.d("About to crop photo to size expected by tensor flow model")
@@ -60,6 +67,10 @@ class MainViewModel : ViewModel() {
                     context,
                     AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F) // vertical midpoint
                 )
+
+                withContext(Dispatchers.Main) {
+                    _analysisResult.value = result
+                }
 
                 Timber.d("Add the bounding boxes and legend to the lores image")
                 loresBitmap.markup(result)
@@ -79,7 +90,7 @@ class MainViewModel : ViewModel() {
             }
 
             withContext(Dispatchers.Main) {
-                progressMonitorVisible.value = false
+                _progressMonitorVisible.value = false
             }
         }
     }
