@@ -27,10 +27,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "123F")
+            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "133F")
         }
         debug {
-            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "123F")
+            buildConfigField("Float", "REFERENCE_OBJECT_WIDTH_MM", "133F")
         }
     }
     compileOptions {

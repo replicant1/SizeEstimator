@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
@@ -21,14 +20,12 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.sizeestimator.domain.Analyser
 import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.domain.BoundingBox
 import java.io.File
@@ -60,7 +57,7 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     println("**** analysisResultState.value = ${analysisResultState.value}")
 
 
-    val binky = remember {
+    val referenceBox = remember {
         derivedStateOf {
             val sortedResults = analysisResultState.value?.sortedResults
             println("**** sortedresults = $sortedResults")
@@ -77,6 +74,19 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         }
     }
 
+    val targetBox = remember {
+        derivedStateOf {
+            val sortedResults = analysisResultState.value?.sortedResults
+            val targetObjectIndex = analysisResult.value?.targetObjectIndex
+            var boundingBox: BoundingBox? = null
+            if ((sortedResults != null) && (targetObjectIndex != null) && (targetObjectIndex != -1)) {
+                val targetObject = sortedResults[targetObjectIndex]
+                boundingBox = targetObject.location
+            }
+            return@derivedStateOf boundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
+        }
+    }
+
 
     Row(
         modifier = Modifier
@@ -87,8 +97,8 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
             println("** new analysisresultState.value ")
         }
 
-        if (binky.value != null) {
-            println("** new binky = ${binky.value}")
+        if (referenceBox.value != null) {
+            println("** new binky = ${referenceBox.value}")
         }
 
         AndroidView(
@@ -127,17 +137,30 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
 
                     val loresToPreview = size.height / 300f
 
-
                     drawRect(
                         color = Color.Red,
                         topLeft = Offset(
-                            binky.value.left * loresToPreview,
-                            binky.value.top * loresToPreview
+                            referenceBox.value.left * loresToPreview,
+                            referenceBox.value.top * loresToPreview
                         ),
                         size = Size(
-                            binky.value.width() * loresToPreview,
-                            binky.value.height() * loresToPreview),
-                        style = Stroke(width = 2f)
+                            referenceBox.value.width() * loresToPreview,
+                            referenceBox.value.height() * loresToPreview
+                        ),
+                        style = Stroke(width = 4f)
+                    )
+
+                    drawRect(
+                        color = Color.Blue,
+                        topLeft = Offset(
+                            targetBox.value.left * loresToPreview,
+                            targetBox.value.top * loresToPreview
+                        ),
+                        size = Size(
+                            targetBox.value.width() * loresToPreview,
+                            targetBox.value.height() * loresToPreview
+                        ),
+                        style = Stroke(width = 4f)
                     )
 
 
