@@ -8,7 +8,7 @@ import kotlin.math.abs
  * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor
  * which inhibits testing.
  */
-data class TestableDetectionResult(
+data class ScoreboardItem(
     val score: Float,
     val location: BoundingBox,
 )
@@ -28,11 +28,11 @@ data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val r
 }
 
 /**
- * Convert between Tensor Flow models and our own model used for processing and testing
+ * Convert between Tensor Flow models and our own [Scoreboard] model
  */
-fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<TestableDetectionResult> {
+fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<ScoreboardItem> {
     return map {
-        TestableDetectionResult(
+        ScoreboardItem(
             it.scoreAsFloat,
             BoundingBox(
                 top = it.locationAsRectF.top,
