@@ -11,8 +11,12 @@ class ObjectSizer(
     private val targetObject: ScoreboardItem
 ) : ScoreboardProcessor<Pair<Int, Int>> {
 
-    override fun process(scoreboard: Scoreboard): Pair<Int, Int> {
+    override fun process(scoreboard: Scoreboard): Pair<Int, Int>? {
         val referenceObjectWidthPx = referenceObject.location.width()
+        if (referenceObjectWidthPx <= 0) {
+            return null
+        }
+
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 
         val actualTargetObjectWidthMm = targetObject.location.width() * mmPerPixel

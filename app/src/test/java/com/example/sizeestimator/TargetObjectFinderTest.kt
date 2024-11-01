@@ -1,20 +1,18 @@
 package com.example.sizeestimator
 
 import com.example.sizeestimator.domain.BoundingBox
-import com.example.sizeestimator.domain.ObjectSizer
-import com.example.sizeestimator.domain.ReferenceObjectFinder
 import com.example.sizeestimator.domain.Scoreboard
 import com.example.sizeestimator.domain.ScoreboardItem
 import com.example.sizeestimator.domain.TargetObjectFinder
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 
 class TargetObjectFinderTest {
 
     @Test
-    fun `find target object when there is only one candidate`() {
+    fun `find target object when there is exactly one candidate`() {
         val target = ScoreboardItem(
             score = 0.9F,
             location = BoundingBox(left = 10F, top = 10F, bottom = 100F, right = 200F)
@@ -30,7 +28,7 @@ class TargetObjectFinderTest {
     }
 
     @Test
-    fun `find target object when there are two candidates`() {
+    fun `find target object when there are exactly two candidates`() {
         val target1 = ScoreboardItem(
             score = 0.9F,
             location = BoundingBox(left = 10F, top = 10F, bottom = 100F, right = 200F)
@@ -48,6 +46,18 @@ class TargetObjectFinderTest {
 
         // target1 should be found because it scored highest
         assertEquals(target1, targetObject)
+    }
+
+    @Test
+    fun `find target object when there is exactly one reference object and no target objects`() {
+        val reference = ScoreboardItem(
+            score = 0.9F,
+            location = BoundingBox(left = 10F, top = 10F, bottom = 100F, right = 200F)
+        )
+        val scoreboard = Scoreboard(listOf(reference))
+        val target = TargetObjectFinder(reference).process(scoreboard)
+
+        assertNull(target)
     }
 
 }

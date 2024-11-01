@@ -13,12 +13,15 @@ class MeasurementEngine {
             referenceObject?.run {
                 val targetObject = TargetObjectFinder(referenceObject).process(scoreboard)
                 targetObject?.run {
-                    return MeasurementTrace(
-                        scoreboard,
-                        referenceObject,
-                        targetObject,
-                        ObjectSizer(referenceObject, targetObject).process(scoreboard)
-                    )
+                    val targetSize = ObjectSizer(referenceObject, targetObject).process(scoreboard)
+                    targetSize?.run {
+                        return MeasurementTrace(
+                            scoreboard,
+                            referenceObject,
+                            targetObject,
+                            targetSize
+                        )
+                    }
                 }
             }
             return null
