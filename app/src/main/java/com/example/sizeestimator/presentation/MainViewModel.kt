@@ -9,7 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.LoresBitmap.Companion.LORES_IMAGE_SIZE_PX
-import com.example.sizeestimator.data.saveToAppCache
+import com.example.sizeestimator.data.save
 import com.example.sizeestimator.domain.MeasurementEngine.Companion.measure
 import com.example.sizeestimator.domain.MeasurementEngine.MeasurementOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -58,14 +58,14 @@ class MainViewModel : ViewModel() {
             Timber.d("Retrieving raw camera image")
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
             if (BuildConfig.DEBUG) {
-                hiresBitmap.saveToAppCache(context, HIRES_FILENAME)
+                hiresBitmap.save(context.cacheDir, HIRES_FILENAME)
             }
 
             // Crop and scale camera image to size Tensor Flow model expects
             Timber.d("Scaling and cropping camera image to tensor flow size")
             val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
             if (BuildConfig.DEBUG) {
-                loresBitmap.saveToAppCache(context, LORES_NO_LEGEND_FILENAME)
+                loresBitmap.save(context.cacheDir, LORES_NO_LEGEND_FILENAME)
             }
 
             // Apply Tensor Flow model and subsequent processing
@@ -76,7 +76,7 @@ class MainViewModel : ViewModel() {
             if ((trace != null) && BuildConfig.DEBUG) {
                 // Save small image marked up with legend etc for debugging
                 loresBitmap.drawTrace(trace)
-                loresBitmap.saveToAppCache(context, LORES_MARKED_UP_FILENAME)
+                loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)
             } else {
                 Timber.d("Failed to measure target object")
             }

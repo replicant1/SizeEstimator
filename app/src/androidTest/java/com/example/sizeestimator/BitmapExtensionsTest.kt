@@ -1,13 +1,18 @@
 package com.example.sizeestimator
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.os.Environment
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.example.sizeestimator.data.save
 import com.example.sizeestimator.data.toSquare
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import org.junit.Before
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -48,4 +53,6 @@ class BitmapExtensionsTest {
         assertEquals(300, square.width)
         assertEquals(300, square.height)
     }
+
+
 }

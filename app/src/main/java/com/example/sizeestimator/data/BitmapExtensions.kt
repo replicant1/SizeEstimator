@@ -7,11 +7,10 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * @return The bitmaps filename, or null if couldn't save
+ * @param dir the directory to save this bitmap as jpeg
+ * @param filename simple name of file within [dir]
  */
-fun Bitmap.saveToAppCache(context: Context, filename: String) {
-    val dir = context.cacheDir
-
+fun Bitmap.save(dir: File, filename: String) {
     if (!dir.exists()) {
         dir.mkdir()
     }

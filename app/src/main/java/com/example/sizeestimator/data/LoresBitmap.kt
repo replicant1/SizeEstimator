@@ -13,6 +13,7 @@ import com.example.sizeestimator.domain.toRectF
 import com.example.sizeestimator.domain.toScoreboardItemList
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
+import java.io.File
 
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
@@ -45,8 +46,8 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
             )
     }
 
-    fun saveToAppCache(context: Context, filename: String) {
-        squareBitmap.saveToAppCache(context, filename)
+    fun save(dir: File, filename: String) {
+        squareBitmap.save(dir, filename)
     }
 
     fun score(context: Context): Scoreboard {
