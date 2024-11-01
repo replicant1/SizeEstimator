@@ -11,7 +11,13 @@ import kotlin.math.abs
 data class ScoreboardItem(
     val score: Float,
     val location: BoundingBox,
-)
+) {
+    companion object {
+        fun fromTensorFlow(tf: SsdMobilenetV1.DetectionResult): ScoreboardItem {
+            return ScoreboardItem(tf.scoreAsFloat, BoundingBox.fromRectF(tf.locationAsRectF))
+        }
+    }
+}
 
 /**
  * The [RectF] property of [SsdMobilenetV1.DetectionResult.getLocationAsRectF] is mocked
@@ -24,6 +30,17 @@ data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val r
 
     fun height(): Float {
         return abs(top - bottom)
+    }
+
+    companion object {
+        fun fromRectF(rect : RectF) : BoundingBox {
+            return BoundingBox(
+                top = rect.top,
+                left = rect.left,
+                right = rect.right,
+                bottom = rect.bottom
+            )
+        }
     }
 }
 

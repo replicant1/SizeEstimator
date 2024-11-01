@@ -1,6 +1,5 @@
 package com.example.sizeestimator
 
-import android.icu.util.Measure
 import com.example.sizeestimator.domain.MeasurementEngine
 import com.example.sizeestimator.domain.BoundingBox
 import com.example.sizeestimator.domain.ObjectSizer
