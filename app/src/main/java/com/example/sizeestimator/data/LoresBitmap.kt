@@ -114,7 +114,6 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
     /**
      * @return The bitmaps filename, or null if couldn't save
      */
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun save(dir: File, filename: String) {
         if (!dir.exists()) {
             dir.mkdir()
