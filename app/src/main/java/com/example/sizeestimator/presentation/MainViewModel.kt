@@ -75,7 +75,7 @@ class MainViewModel : ViewModel() {
 
             if ((trace != null) && BuildConfig.DEBUG) {
                 // Save small image marked up with legend etc for debugging
-                loresBitmap.markup(trace)
+                loresBitmap.drawTrace(trace)
                 loresBitmap.saveToAppCache(context, LORES_MARKED_UP_FILENAME)
             } else {
                 Timber.d("Failed to measure target object")

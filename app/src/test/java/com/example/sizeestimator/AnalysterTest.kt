@@ -139,8 +139,8 @@ class AnalysterTest {
         val analysisResult = MeasurementEngine.measure(
             scoreboard, MeasurementEngine.MeasurementOptions(minTop = 150F))
 
-        assertEquals(target, analysisResult?.sortedResults?.list?.get(0))
-        assertEquals(reference, analysisResult?.sortedResults?.list?.get(1))
+        assertEquals(target, analysisResult?.scoreboard?.list?.get(0))
+        assertEquals(reference, analysisResult?.scoreboard?.list?.get(1))
 
         val refWidthPx = reference.location.width()
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / refWidthPx

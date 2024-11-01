@@ -23,14 +23,33 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
         fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap {
             return LoresBitmap(hiresBitmap.toSquare(LORES_IMAGE_SIZE_PX))
         }
+
         const val LORES_IMAGE_SIZE_PX = 300
+        private val BOX_STROKE_EFFECT = DashPathEffect(floatArrayOf(1F, 1F), 1F)
+        const val LEGEND_MARGIN_PX = 10
+        const val LEGEND_BOX_WIDTH_PX = 10
+        const val LEGEND_ROW_HEIGHT_PX = 20
+        const val LEGEND_BOX_TEXT_GAP_PX = 5
+        private val MARK_UP_COLORS: List<Int> =
+            listOf(
+                Color.RED,
+                Color.YELLOW,
+                Color.BLUE,
+                Color.CYAN,
+                Color.BLACK,
+                Color.DKGRAY,
+                Color.GRAY,
+                Color.GREEN,
+                Color.LTGRAY,
+                Color.MAGENTA
+            )
     }
 
-    fun saveToAppCache(context : Context, filename: String) {
+    fun saveToAppCache(context: Context, filename: String) {
         squareBitmap.saveToAppCache(context, filename)
     }
 
-    fun score(context : Context) : Scoreboard {
+    fun score(context: Context): Scoreboard {
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(squareBitmap)
         val outputs = model.process(image)
@@ -40,23 +59,9 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
 
     /**
      * Draw bounding boxes, scores and a legend on this [LoresBitmap] that visualizes
-     * the given [measurementTrace].
+     * the given [trace]. Mutates the bitmap supplied to the constructor.
      */
-    fun markup(measurementTrace: MeasurementTrace) {
-        val rectPaint = Paint()
-        rectPaint.style = Paint.Style.STROKE
-        rectPaint.strokeWidth = 2F
-        rectPaint.isAntiAlias = false
-
-        val textPaint = Paint()
-        textPaint.textSize = 14F
-        textPaint.typeface = Typeface.MONOSPACE
-        textPaint.strokeWidth = 2F
-
-        val legendPaint = Paint()
-        legendPaint.style = Paint.Style.FILL
-        legendPaint.strokeWidth = 2F
-
+    fun drawTrace(trace: MeasurementTrace) {
         val mutableBitmap = Bitmap.createBitmap(
             squareBitmap.width,
             squareBitmap.height,
@@ -64,56 +69,76 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
         )
         val canvas = Canvas(mutableBitmap)
 
-        // Copy mutable bitmap to the canvas so that we can draw on top of it
-        canvas.drawBitmap(squareBitmap, 0F, 0F, rectPaint)
+        // Copy mutable bitmap to the canvas then draw legend and bounding
+        // boxes on top of it
+        canvas.drawBitmap(squareBitmap, 0F, 0F, Paint())
+        drawLegend(canvas, trace)
+        drawBoundingBoxes(canvas, trace)
 
-        measurementTrace.sortedResults.list.forEachIndexed { index, result ->
-            // Make the bounding boxes for reference and target objects standout as solid while
-            // others are dashed.
-            if ((result == measurementTrace.targetObject) || (result == measurementTrace.referenceObject)) {
-                rectPaint.pathEffect = null
-            } else {
-                rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
-            }
-            rectPaint.color = MARKUP_COLORS[index % MARKUP_COLORS.size]
-            canvas.drawRect(result.location.toRectF(), rectPaint)
+        squareBitmap = mutableBitmap
+    }
+
+    /**
+     * Draws a legend at top left into the given [canvas] showing color and score
+     * for all bounding boxes in the []
+     */
+    private fun drawLegend(canvas: Canvas, trace: MeasurementTrace) {
+        val legendPaint = Paint().apply {
+            style = Paint.Style.FILL
+            strokeWidth = 2F
         }
 
-        // Draw the legend at top left of the image
-        measurementTrace.sortedResults.list.forEachIndexed { index, result ->
-            legendPaint.color = MARKUP_COLORS[index]
+        val textPaint = Paint().apply {
+            textSize = 14F
+            typeface = Typeface.MONOSPACE
+            strokeWidth = 2F
+        }
+
+        trace.scoreboard.list.forEachIndexed { index, item ->
+            legendPaint.color = MARK_UP_COLORS[index]
+
+            // Draw a filled square in the current item's colour
             canvas.drawRect(
                 android.graphics.Rect(
-                    10,
-                    10 + (index * 20),
-                    20,
-                    20 + (index * 20)
+                    LEGEND_MARGIN_PX,
+                    LEGEND_MARGIN_PX + (index * LEGEND_ROW_HEIGHT_PX),
+                    LEGEND_MARGIN_PX + LEGEND_BOX_WIDTH_PX,
+                    LEGEND_ROW_HEIGHT_PX + (index * LEGEND_ROW_HEIGHT_PX)
                 ),
                 legendPaint
             )
 
-            textPaint.color = MARKUP_COLORS[index]
+            // Draw the numerical score for current item
+            textPaint.color = MARK_UP_COLORS[index]
             canvas.drawText(
-                result.score.toString(),
-                25F,
-                20F + (index * 20),
+                item.score.toString(),
+                (LEGEND_MARGIN_PX + LEGEND_BOX_WIDTH_PX + LEGEND_BOX_TEXT_GAP_PX).toFloat(),
+                (LEGEND_ROW_HEIGHT_PX + (index * LEGEND_ROW_HEIGHT_PX)).toFloat(),
                 textPaint
             )
         }
-        squareBitmap = mutableBitmap
     }
 
-    val MARKUP_COLORS: List<Int> =
-        listOf(
-            Color.RED,
-            Color.YELLOW,
-            Color.BLUE,
-            Color.CYAN,
-            Color.BLACK,
-            Color.DKGRAY,
-            Color.GRAY,
-            Color.GREEN,
-            Color.LTGRAY,
-            Color.MAGENTA
-        )
+    /**
+     * Draws the bounding boxes in the [trace] in the appropriate colours and patterns. Boxes
+     * for reference and target objects are solid, others are dashed.
+     */
+    private fun drawBoundingBoxes(canvas: Canvas, trace: MeasurementTrace) {
+        val rectPaint = Paint().apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 2F
+            isAntiAlias = false
+        }
+
+        trace.scoreboard.list.forEachIndexed { index, item ->
+            rectPaint.pathEffect =
+                if ((item == trace.targetObject) || (item == trace.referenceObject)) {
+                    null
+                } else {
+                    BOX_STROKE_EFFECT
+                }
+            rectPaint.color = MARK_UP_COLORS[index % MARK_UP_COLORS.size]
+            canvas.drawRect(item.location.toRectF(), rectPaint)
+        }
+    }
 }
