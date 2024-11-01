@@ -9,7 +9,7 @@ import java.io.FileOutputStream
 /**
  * @return The bitmaps filename, or null if couldn't save
  */
-fun Bitmap.saveToAppCache(context : Context, filename: String) {
+fun Bitmap.saveToAppCache(context: Context, filename: String) {
     val dir = context.cacheDir
 
     if (!dir.exists()) {
@@ -18,14 +18,14 @@ fun Bitmap.saveToAppCache(context : Context, filename: String) {
 
     val path = dir.absolutePath + File.separator + filename
 
-    Timber.d("About to save bitmap to cache file: %s", path)
+    Timber.d("About to save bitmap to cache file:$path")
 
     try {
         val fileOutputStream = FileOutputStream(path)
         this.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
         fileOutputStream.close()
 
-        Timber.d("Wrote bitmap OK to cache file " + path)
+        Timber.d("Wrote bitmap OK to cache file $path")
 
     } catch (e: java.lang.Exception) {
         Timber.w(e)
@@ -35,7 +35,7 @@ fun Bitmap.saveToAppCache(context : Context, filename: String) {
 /**
  * Scale and crop to square
  */
-fun Bitmap.toSquare(side : Int) : Bitmap {
+fun Bitmap.toSquare(side: Int): Bitmap {
     Timber.d("Cropping bitmap to side = $side")
 
     // Cropping this much off width should make image square
