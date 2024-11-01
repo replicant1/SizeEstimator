@@ -40,16 +40,27 @@ fun Bitmap.toSquare(side: Int): Bitmap {
 
     // Cropping this much off width should make image square
     // NOTE: Assuming width > height
-    val horizontalCrop = (this.width - this.height) / 2
-    val squaredBitmap = Bitmap.createBitmap(
-        this,
-        horizontalCrop,
-        0,
-        this.height,
-        this.height
-    )
+    val squaredBitmap = if (this.width >= this.height) {
+        val horizontalCrop = (this.width - this.height) / 2
+        Bitmap.createBitmap(
+            this, // source
+            horizontalCrop, // x
+            0, // y
+            this.height, // width
+            this.height  // height
+        )
+    } else {
+        val verticalCrop = (this.height - this.width) / 2
+        Bitmap.createBitmap(
+            this, // source
+            0, // x
+            verticalCrop, // y
+            this.width, // width
+            this.width // height
+        )
+    }
 
-    Timber.d("Squared bitmap has width = ${squaredBitmap.width} + height = ${squaredBitmap.height}")
+    Timber.d("Squared bitmap has width = ${squaredBitmap.width}, height = ${squaredBitmap.height}")
 
     // Scale down to size expected by TensorFlow model
     val scaledSquareBitmap = Bitmap.createScaledBitmap(
