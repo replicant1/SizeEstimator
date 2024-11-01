@@ -10,7 +10,7 @@ import android.graphics.Typeface
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.Scoreboard
 import com.example.sizeestimator.domain.toRectF
-import com.example.sizeestimator.domain.toTestable
+import com.example.sizeestimator.domain.toScoreboardItemList
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 
@@ -35,7 +35,7 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
         val image = TensorImage.fromBitmap(squareBitmap)
         val outputs = model.process(image)
         model.close()
-        return Scoreboard(outputs.detectionResultList.toTestable())
+        return Scoreboard(outputs.detectionResultList.toScoreboardItemList())
     }
 
     /**
