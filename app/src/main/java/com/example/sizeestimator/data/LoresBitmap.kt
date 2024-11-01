@@ -18,6 +18,7 @@ import org.tensorflow.lite.support.image.TensorImage
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.time.measureTime
 
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
@@ -31,19 +32,21 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
      * @return result of feeding the [loresBitmap] into the Tensor Flow model. null if analysis fails.
      */
     fun analyse(context: Context, options: AnalysisOptions): AnalysisResult? {
-        val analysisStartTime = System.currentTimeMillis()
-        val model = SsdMobilenetV1.newInstance(context)
-        val image = TensorImage.fromBitmap(loresBitmap)
-        val outputs = model.process(image)
-        val sortedResults = SortedResultList(outputs.detectionResultList.toTestable())
-        val analyser = Analyser(sortedResults)
-        val analysisEndTime = System.currentTimeMillis()
+        var result : AnalysisResult? = null
 
-        Timber.d("LoresBitmap.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
+        val analysisStartTime = measureTime {
+            val model = SsdMobilenetV1.newInstance(context)
+            val image = TensorImage.fromBitmap(loresBitmap)
+            val outputs = model.process(image)
+            val sortedResults = SortedResultList(outputs.detectionResultList.toTestable())
+            val analyser = Analyser(sortedResults)
+            model.close()
+            result = analyser.analyse(options)
+        }
 
-        model.close()
+        Timber.d("LoresBitmap.analyse() duration = ${analysisStartTime.inWholeMilliseconds} ms")
 
-        return analyser.analyse(options)
+        return result
     }
 
     /**

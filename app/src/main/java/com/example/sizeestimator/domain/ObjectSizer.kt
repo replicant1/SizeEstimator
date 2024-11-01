@@ -3,15 +3,15 @@ package com.example.sizeestimator.domain
 import com.example.sizeestimator.BuildConfig
 
 /**
- * @property referenceObject as found with [ReferenceObjectFinder]
- * @property targetObject as found with [TargetObjectFinder]
+ * @property referenceObject as found with [ReferenceObjectFinder] amongst [SortedResultList]
+ * @property targetObject as found with [TargetObjectFinder] amongst [SortedResultList]
  */
 class ObjectSizer(
     private val referenceObject: TestableDetectionResult,
     private val targetObject: TestableDetectionResult
 ) : SortedResultListProcessor<Pair<Int, Int>> {
 
-    override fun process(sortedResults: SortedResultList): Pair<Int, Int>? {
+    override fun process(sortedResults: SortedResultList): Pair<Int, Int> {
         val referenceObjectWidthPx = referenceObject.location.width()
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 

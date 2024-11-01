@@ -5,8 +5,8 @@ import com.example.sizeestimator.ml.SsdMobilenetV1
 import kotlin.math.abs
 
 /**
- * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor.
-
+ * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor
+ * which inhibits testing.
  */
 data class TestableDetectionResult(
     val score: Float,
@@ -15,7 +15,7 @@ data class TestableDetectionResult(
 
 /**
  * The [RectF] property of [SsdMobilenetV1.DetectionResult.getLocationAsRectF] is mocked
- * for (test) source tree.
+ * for (test) source tree so this provides an alternative.
  */
 data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val right: Float) {
     fun width(): Float {
@@ -28,7 +28,7 @@ data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val r
 }
 
 /**
- * Convert between models, information is preserved.
+ * Convert between Tensor Flow models and our own model used for processing and testing
  */
 fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<TestableDetectionResult> {
     return map {
