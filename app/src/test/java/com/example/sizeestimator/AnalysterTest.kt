@@ -1,6 +1,5 @@
 package com.example.sizeestimator
 
-import android.util.Size
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.domain.Analyser
 import com.example.sizeestimator.domain.BoundingBox
@@ -27,10 +26,11 @@ class AnalysterTest {
             location = BoundingBox(left = 30F, top = 190F, bottom = 220F, right = 220F)
         )
         val sortedResults = SortedResultList(listOf(result1, result2))
-        val refIndex = sortedResults.process(ReferenceObjectFinder(150F)) as Int?
+        val refObject = ReferenceObjectFinder(150F).process(sortedResults)
 
         // Sorted results = [result1, result2]. result2 is the ref object as top > 150F
-        assertEquals(1, refIndex)
+        assertNotNull(refObject)
+        assertEquals(1, sortedResults.list.indexOf(refObject))
     }
 
     @Test
@@ -43,10 +43,10 @@ class AnalysterTest {
             score = 0.8F,
             location = BoundingBox(left = 10F, top = 20F, bottom = 110F, right = 200F)
         )
-        val detectedResults = SortedResultList(listOf(result1, result2))
-        val refIndex = detectedResults.process(ReferenceObjectFinder(150F)) as Int?
+        val sortedResults = SortedResultList(listOf(result1, result2))
+        val refObject = ReferenceObjectFinder(150F).process(sortedResults)
 
-        assertNull(refIndex)
+        assertNull(refObject)
     }
 
     @Test
@@ -59,10 +59,13 @@ class AnalysterTest {
             score = 0.8F,
             location = BoundingBox(left = 10F, top = 180F, bottom = 200F, right = 200F)
         )
-        val detectedResults = SortedResultList(listOf(aboveTheMidpoint, belowTheMidpoint))
-        val refIndex = detectedResults.process(ReferenceObjectFinder(150F)) as Int?
+        val sortedResults = SortedResultList(listOf(aboveTheMidpoint, belowTheMidpoint))
+        val refObject = ReferenceObjectFinder(150F).process(sortedResults)
+        assertNotNull(refObject)
+        val targetObject = TargetObjectFinder(refObject!!).process(sortedResults)
 
-        assertEquals(1, refIndex)
+        assertNotNull(targetObject)
+        assertEquals(0, sortedResults.list.indexOf(aboveTheMidpoint))
     }
 
     @Test
@@ -75,10 +78,10 @@ class AnalysterTest {
             score = 0.8F,
             location = BoundingBox(left = 10F, top = 200F, bottom = 300F, right = 200F)
         )
-        val detectedResults = SortedResultList(listOf(target, reference))
-        val targetIndex = detectedResults.process(TargetObjectFinder(1)) as Int?
+        val sortedResults = SortedResultList(listOf(target, reference))
+        val targetObject = TargetObjectFinder(reference).process(sortedResults)
 
-        assertEquals(0, targetIndex)
+        assertEquals(targetObject, target)
     }
 
     @Test
@@ -96,9 +99,9 @@ class AnalysterTest {
             location = BoundingBox(left = 12F, top = 180F, bottom = 200F, right = 210F)
         )
         val sortedResults = SortedResultList(listOf(target1, target2, reference))
-        val targetIndex = sortedResults.process(TargetObjectFinder(2)) as Int?
+        val targetObject = TargetObjectFinder(reference).process(sortedResults)
 
-        assertEquals(0, targetIndex)
+        assertEquals(target1, targetObject)
     }
 
     @Test
@@ -112,20 +115,15 @@ class AnalysterTest {
             location = BoundingBox(left = 10F, top = 200F, bottom = 250F, right = 200F)
         )
         val sortedResults = SortedResultList(listOf(target, reference))
-        val size = sortedResults.process(
-            ObjectSizer(
-                referenceObjectIndex = 1,
-                targetObjectIndex = 0
-            )
-        ) as Pair<Int, Int>
+        val size = ObjectSizer(reference, target).process(sortedResults)
 
         val refWidthPx = reference.location.width()
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / refWidthPx
         val targetWidthMm = target.location.width() * mmPerPixel
         val targetHeightMm = target.location.height() * mmPerPixel
 
-        assertEquals(size.first, targetWidthMm.toInt())
-        assertEquals(size.second, targetHeightMm.toInt())
+        assertEquals(size?.first, targetWidthMm.toInt())
+        assertEquals(size?.second, targetHeightMm.toInt())
     }
 
     @Test
@@ -142,10 +140,8 @@ class AnalysterTest {
         val analyser = Analyser(sortedResults)
         val analysisResult = analyser.analyse(LoresBitmap.AnalysisOptions(minTop = 150F))
 
-        assertEquals(target, analysisResult?.sortedResults?.sortedResultList?.get(0))
-        assertEquals(reference, analysisResult?.sortedResults?.sortedResultList?.get(1))
-        assertEquals(1, analysisResult?.referenceObjectIndex)
-        assertEquals(0, analysisResult?.targetObjectIndex)
+        assertEquals(target, analysisResult?.sortedResults?.list?.get(0))
+        assertEquals(reference, analysisResult?.sortedResults?.list?.get(1))
 
         val refWidthPx = reference.location.width()
         val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / refWidthPx
@@ -154,18 +150,5 @@ class AnalysterTest {
 
         assertEquals(targetWidthMm.toInt(), analysisResult?.targetObjectSizeMillimetres?.first)
         assertEquals(targetHeightMm.toInt(), analysisResult?.targetObjectSizeMillimetres?.second)
-    }
-
-    @Test
-    fun `find target object when reference object was not found`() {
-        val target = TestableDetectionResult(
-            score = 0.9F,
-            location = BoundingBox(left = 10F, top = 10F, bottom = 100F, right = 200F)
-        )
-        val sortedResults = SortedResultList(listOf(target))
-        val result = sortedResults.process(TargetObjectFinder(-1))
-
-        // Target object cannot be found unless reference object is found
-        assertEquals(-1, result)
     }
 }

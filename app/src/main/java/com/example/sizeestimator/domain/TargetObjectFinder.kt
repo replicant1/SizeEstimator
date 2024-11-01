@@ -1,25 +1,22 @@
 package com.example.sizeestimator.domain
 
-class TargetObjectFinder(private val referenceObjectIndex: Int) : SortedResultListProcessor {
+/**
+ * @property referenceObject as previously found with [ReferenceObjectFinder]
+ */
+class TargetObjectFinder(private val referenceObject: TestableDetectionResult) :
+    SortedResultListProcessor<TestableDetectionResult> {
 
     /**
      * Find the target object - it is the highest scoring result above the reference object.
      *
-     * @param referenceObjectIndex Index of element in receiver corresponding to reference object
-     * @return Index into receiving List of the target object. -1 if not found.
+     * @return Index into receiving List of the target object. null if not found.
      */
-    override fun process(sortedResults: SortedResultList) : Int? {
-        if (referenceObjectIndex < 0 || referenceObjectIndex >= sortedResults.sortedResultList.size) {
-            return SortedResultList.UNKNOWN
-        }
-
-        val referenceObject = sortedResults.sortedResultList[referenceObjectIndex]
-
-        sortedResults.sortedResultList.forEachIndexed { index, result ->
+    override fun process(sortedResults: SortedResultList) : TestableDetectionResult? {
+        sortedResults.list.forEach { result ->
             if (result.location.bottom < referenceObject.location.top) {
-                return index
+                return result
             }
         }
-        return SortedResultList.UNKNOWN
+        return null
     }
 }

@@ -1,8 +1,11 @@
 package com.example.sizeestimator.domain
 
-import androidx.core.view.accessibility.AccessibilityViewCommand.SetTextArguments
+interface SortedResultListProcessor<T> {
 
-interface SortedResultListProcessor {
-    fun process(sortedResults : SortedResultList) : Any?
-
+    /**
+     * @return result of processing the [sortedResults] or null if processing
+     * was not possible.
+     */
+    fun process(sortedResults : SortedResultList) : T?
 }
+

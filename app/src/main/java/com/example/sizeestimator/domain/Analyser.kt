@@ -1,6 +1,5 @@
 package com.example.sizeestimator.domain
 
-import android.util.Size
 import com.example.sizeestimator.data.LoresBitmap
 import timber.log.Timber
 
@@ -18,20 +17,18 @@ class Analyser(private val sortedResults: SortedResultList) {
         var result: AnalysisResult? = null
 
         val analysisTime = kotlin.time.measureTime {
-            val referenceObjectIndex =
-                sortedResults.process(ReferenceObjectFinder(options.minTop)) as Int?
-            if (referenceObjectIndex != null) {
-                val targetObjectIndex =
-                    sortedResults.process(TargetObjectFinder(referenceObjectIndex)) as Int?
-                if (targetObjectIndex != null) {
-                    val targetObjectSizeMm = sortedResults.process(
-                        ObjectSizer(referenceObjectIndex, targetObjectIndex)) as Pair<Int, Int>?
+            val referenceObject = ReferenceObjectFinder(options.minTop).process(sortedResults)
+            if (referenceObject != null) {
+                val targetObject = TargetObjectFinder(referenceObject).process(sortedResults)
+                if (targetObject != null) {
+                    val targetObjectSizeMm =
+                        ObjectSizer(referenceObject, targetObject).process(sortedResults)
                     if (targetObjectSizeMm != null) {
                         result = AnalysisResult(
-                            sortedResults = sortedResults,
-                            referenceObjectIndex = referenceObjectIndex,
-                            targetObjectIndex = targetObjectIndex,
-                            targetObjectSizeMillimetres = targetObjectSizeMm
+                            sortedResults,
+                            referenceObject,
+                            targetObject,
+                            targetObjectSizeMm
                         )
                     }
                 }

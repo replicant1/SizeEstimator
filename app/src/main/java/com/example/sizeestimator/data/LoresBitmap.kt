@@ -75,10 +75,10 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
         // Copy mutable bitmap to the canvas so that we can draw on top of it
         canvas.drawBitmap(loresBitmap, 0F, 0F, rectPaint)
 
-        analysisResult.sortedResults.sortedResultList.forEachIndexed { index: Int, result ->
+        analysisResult.sortedResults.list.forEachIndexed { index, result ->
             // Make the bounding boxes for reference and target objects standout as solid while
             // others are dashed.
-            if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
+            if ((result == analysisResult.targetObject) || (result == analysisResult.referenceObject)) {
                 rectPaint.pathEffect = null
             } else {
                 rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
@@ -88,7 +88,7 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
         }
 
         // Draw the legend at top left of the image
-        analysisResult.sortedResults.sortedResultList.forEachIndexed { index, result ->
+        analysisResult.sortedResults.list.forEachIndexed { index, result ->
             legendPaint.color = MARKUP_COLORS[index]
             canvas.drawRect(
                 android.graphics.Rect(

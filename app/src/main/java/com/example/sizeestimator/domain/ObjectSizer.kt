@@ -1,30 +1,23 @@
 package com.example.sizeestimator.domain
 
-import android.util.Size
 import com.example.sizeestimator.BuildConfig
 
+/**
+ * @property referenceObject as found with [ReferenceObjectFinder]
+ * @property targetObject as found with [TargetObjectFinder]
+ */
 class ObjectSizer(
-    private val referenceObjectIndex: Int,
-    private val targetObjectIndex: Int
-) : SortedResultListProcessor {
+    private val referenceObject: TestableDetectionResult,
+    private val targetObject: TestableDetectionResult
+) : SortedResultListProcessor<Pair<Int, Int>> {
 
     override fun process(sortedResults: SortedResultList): Pair<Int, Int>? {
-        return if (
-            sortedResults.hasIndex(referenceObjectIndex) &&
-            sortedResults.hasIndex(targetObjectIndex)
-        ) {
-            val referenceObjectResult = sortedResults.sortedResultList[referenceObjectIndex]
-            val targetObjectResult = sortedResults.sortedResultList[targetObjectIndex]
+        val referenceObjectWidthPx = referenceObject.location.width()
+        val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
 
-            val referenceObjectWidthPx = referenceObjectResult.location.width()
-            val mmPerPixel = BuildConfig.REFERENCE_OBJECT_WIDTH_MM / referenceObjectWidthPx
+        val actualTargetObjectWidthMm = targetObject.location.width() * mmPerPixel
+        val actualTargetObjectHeightMm = targetObject.location.height() * mmPerPixel
 
-            val actualTargetObjectWidthMm = targetObjectResult.location.width() * mmPerPixel
-            val actualTargetObjectHeightMm = targetObjectResult.location.height() * mmPerPixel
-
-            Pair(actualTargetObjectWidthMm.toInt(), actualTargetObjectHeightMm.toInt())
-        } else {
-            null
-        }
+        return Pair(actualTargetObjectWidthMm.toInt(), actualTargetObjectHeightMm.toInt())
     }
 }
