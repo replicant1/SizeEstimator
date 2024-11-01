@@ -95,8 +95,8 @@ class MainViewModel : ViewModel() {
     }
 
     companion object {
-        const val LORES_MARKED_UP_FILENAME = "lores_marked_up.jpg"
-        const val LORES_NO_LEGEND_FILENAME = "lores.jpg"
+        private const val LORES_MARKED_UP_FILENAME = "lores_marked_up.jpg"
+        private const val LORES_NO_LEGEND_FILENAME = "lores.jpg"
         const val HIRES_FILENAME = "hires.jpg"
     }
 }
