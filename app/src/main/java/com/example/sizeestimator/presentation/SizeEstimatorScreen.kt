@@ -19,7 +19,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -31,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.domain.BoundingBox
 import timber.log.Timber
@@ -98,78 +99,98 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         AndroidView(
             modifier = Modifier
                 .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
-                .drawWithContent {
-                    drawContent()
-                    val centerXPx = size.width / 2
-                    val centerYPx = size.height / 2
-                    val targetSizePx = 50f
-                    val targetStrokeWidth = 4f
-                    val targetColor = Color.Blue
+                .drawWithCache {
+                    val centerX = size.width / 2
+                    val centerY = size.height / 2
 
-                    // Horizontal stroke of the cross-hair
-                    drawLine(
-                        targetColor,
-                        strokeWidth = targetStrokeWidth,
-                        start = Offset(centerXPx - targetSizePx, centerYPx),
-                        end = Offset(centerXPx + targetSizePx, centerYPx)
+                    // Cross-hair at center
+                    val crossHairColor = Color.Blue
+                    val crossHairSize = 50f
+                    val crossHairLeft = Offset(centerX - crossHairSize, centerY)
+                    val crossHairRight = Offset(centerX + crossHairSize, centerY)
+                    val crossHairTop = Offset(centerX, centerY - crossHairSize)
+                    val crossHairBottom = Offset(centerX, centerY + crossHairSize)
+
+                    // Bounding boxes for reference and target objects
+                    val boxXLeftOffset = (size.width - size.height) / 2
+                    val boxStrokeWidth = 4f
+                    val referenceBoxColor = Color.Red
+                    val targetBoxColor = Color.Green
+
+                    // Lores square viewport in center
+                    val loresSquareTopLeft = Offset(
+                        centerX - (size.height / 2),
+                        centerY - (size.height / 2)
                     )
-                    // Vertical stroke of the cross-hair
-                    drawLine(
-                        targetColor,
-                        strokeWidth = targetStrokeWidth,
-                        start = Offset(centerXPx, centerYPx - targetSizePx),
-                        end = Offset(centerXPx, centerYPx + targetSizePx)
+                    val loresSquareSize = Size(size.height, size.height)
+                    val loresSquareStyle = Stroke(width = boxStrokeWidth)
+
+                    // Scaling factor (assume landscape) - from lores to preview
+                    val scale = size.height / LoresBitmap.LORES_IMAGE_SIZE_PX.toFloat()
+
+                    val referenceBoxTopLeft = Offset(
+                        boxXLeftOffset + referenceBox.value.left * scale,
+                        referenceBox.value.top * scale
+                    )
+                    val referenceBoxSize = Size(
+                        referenceBox.value.width() * scale,
+                        referenceBox.value.height() * scale
+                    )
+                    val targetBoxTopLeft = Offset(
+                        boxXLeftOffset + targetBox.value.left * scale,
+                        targetBox.value.top * scale
+                    )
+                    val targetBoxSize = Size(
+                        targetBox.value.width() * scale,
+                        targetBox.value.height() * scale
                     )
 
-                    // Square that anticipates the lores bitmap that
-                    // will ultimately be promised by the Tensor Flow model.
-                    // Reference and target objects should be positioned within this.
-                    if (size.width >= size.height) {
+                    onDrawWithContent {
+                        drawContent()
+
+                        // Horizontal stroke of the cross-hair
+                        drawLine(
+                            crossHairColor,
+                            strokeWidth = boxStrokeWidth,
+                            start = crossHairLeft,
+                            end = crossHairRight
+                        )
+                        // Vertical stroke of the cross-hair
+                        drawLine(
+                            crossHairColor,
+                            strokeWidth = boxStrokeWidth,
+                            start = crossHairTop,
+                            end = crossHairBottom
+                        )
+
+                        // Square that anticipates the lores bitmap that
+                        // will ultimately be analysed by the Tensor Flow model.
+                        // Reference and target objects should be positioned within this.
                         drawRect(
-                            color = Color.Blue,
-                            topLeft = Offset(
-                                centerXPx - (size.height / 2),
-                                centerYPx - (size.height / 2)
-                            ),
-                            size = Size(size.height, size.height),
-                            style = Stroke(width = targetStrokeWidth)
+                            color = crossHairColor,
+                            topLeft = loresSquareTopLeft,
+                            size = loresSquareSize,
+                            style = loresSquareStyle
+                        )
+
+                        // Bounding box of the reference object as per analysis
+                        drawRect(
+                            color = referenceBoxColor,
+                            topLeft = referenceBoxTopLeft,
+                            size = referenceBoxSize,
+                            style = Stroke(width = boxStrokeWidth)
+                        )
+
+                        // Bounding box of the target object as per analysis
+                        drawRect(
+                            color = targetBoxColor,
+                            topLeft = targetBoxTopLeft,
+                            size = targetBoxSize,
+                            style = Stroke(width = boxStrokeWidth)
                         )
                     }
-
-                    // Scale factor for analysis result -> preview view
-                    val loresToPreview = size.height / 300f
-                    val boxXOffsetPx = ( size.width - size.height) / 2
-                    val boxStrokeWidthPx = 4f
-
-                    // Bounding box of the reference object as per analysis
-                    drawRect(
-                        color = Color.Red,
-                        topLeft = Offset(
-                            boxXOffsetPx + referenceBox.value.left * loresToPreview,
-                             referenceBox.value.top * loresToPreview
-                        ),
-                        size = Size(
-                             referenceBox.value.width() * loresToPreview,
-                              referenceBox.value.height() * loresToPreview
-                        ),
-                        style = Stroke(width = boxStrokeWidthPx)
-                    )
-
-                    // Bounding box of the target object as per analysis
-                    drawRect(
-                        color = Color.Green,
-                        topLeft = Offset(
-                            boxXOffsetPx + targetBox.value.left * loresToPreview,
-                             targetBox.value.top * loresToPreview
-                        ),
-                        size = Size(
-                             targetBox.value.width() * loresToPreview,
-                             targetBox.value.height() * loresToPreview
-                        ),
-                        style = Stroke(width = boxStrokeWidthPx)
-                    )
                 },
-            factory = { ctx ->
+            factory = {
                 previewView.apply {
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
@@ -178,7 +199,11 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
             }
         )
 
-        Box(modifier = Modifier.weight(1F).size(100.dp)) {
+        Box(
+            modifier = Modifier
+                .weight(1F)
+                .size(100.dp)
+        ) {
             MeasureButtonPanel(
                 sizeText = viewModel.sizeText,
                 progressMonitorVisible = viewModel.progressMonitorVisible,
