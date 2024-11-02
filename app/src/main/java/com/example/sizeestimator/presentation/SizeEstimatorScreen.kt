@@ -15,15 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -31,9 +27,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.domain.AnalysisResult
-import com.example.sizeestimator.domain.BoundingBox
 import timber.log.Timber
 import java.io.File
 import kotlin.coroutines.resume
@@ -72,7 +66,7 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         AndroidView(
             modifier = Modifier
                 .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
-                .drawWithCache(stuff(analysisResultState)) ,
+                .drawWithCache(drawOverlay(analysisResultState)) ,
             factory = {
                 previewView.apply {
                     scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -114,7 +108,6 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         }
     }
 }
-
 
 private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
     suspendCoroutine { continuation ->

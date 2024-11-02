@@ -12,10 +12,17 @@ import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.domain.BoundingBox
 
-fun stuff(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.() ->  DrawResult {
-    val a :CacheDrawScope.() -> DrawResult = {
-        println("** Into cachedrawscope **")
+/**
+ * Draws an overlay on top of the camera preview that shows the target and reference bounding
+ * boxes as per [analysisResultState].
+ */
+fun drawOverlay(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.() ->  DrawResult {
+    return {
+        // Values in this section are only recalculated when the state variables they depend upon
+        // change value. The drawing commands in the "onDrawContent" lambda are redrawn with every blit.
         val sortedResults = analysisResultState.value?.sortedResults
+
+        // Find reference object's bounding box
         val referenceObjectIndex = analysisResultState.value?.referenceObjectIndex
         var refBoundingBox: BoundingBox? = null
         if ((sortedResults != null) && (referenceObjectIndex != null) && (referenceObjectIndex != -1)) {
@@ -24,6 +31,7 @@ fun stuff(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.() -> 
         }
         val referenceBox = refBoundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
 
+        // Find target object's bounding box
         val targetObjectIndex = analysisResultState.value?.targetObjectIndex
         var targBoundingBox: BoundingBox? = null
         if ((sortedResults != null) && (targetObjectIndex != null) && (targetObjectIndex != -1)) {
@@ -122,5 +130,4 @@ fun stuff(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.() -> 
             )
         }
     }
-    return a
 }
