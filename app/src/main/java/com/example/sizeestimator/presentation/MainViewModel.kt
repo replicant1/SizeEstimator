@@ -54,14 +54,14 @@ class MainViewModel : ViewModel() {
                 progressMonitorVisible.value = true
             }
 
-            // Get the raw camera image
+            // Get the raw camera image and save for debugging
             Timber.d("Retrieving raw camera image")
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
             if (BuildConfig.DEBUG) {
                 hiresBitmap.save(context.cacheDir, HIRES_FILENAME)
             }
 
-            // Crop and scale camera image to size Tensor Flow model expects
+            // Crop and scale camera image to size Tensor Flow model expects and save for debugging
             Timber.d("Scaling and cropping camera image to tensor flow size")
             val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
             if (BuildConfig.DEBUG) {
@@ -73,10 +73,12 @@ class MainViewModel : ViewModel() {
             val scoreboard = loresBitmap.score(context)
             val trace = measure(scoreboard, MeasurementOptions(minTop = LORES_IMAGE_SIZE_PX / 2f))
 
-            if ((trace != null) && BuildConfig.DEBUG) {
-                // Save small image marked up with legend etc for debugging
-                loresBitmap.drawTrace(trace)
-                loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)
+            if (trace != null) {
+                if (BuildConfig.DEBUG) {
+                    // Save small image marked up with legend etc for debugging
+                    loresBitmap.drawTrace(trace)
+                    loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)
+                }
             } else {
                 Timber.d("Failed to measure target object")
             }

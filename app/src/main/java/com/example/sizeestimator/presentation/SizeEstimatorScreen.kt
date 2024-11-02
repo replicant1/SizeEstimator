@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.sizeestimator.R
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -52,33 +53,39 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
         .fillMaxSize()) {
 
         AndroidView(
-            modifier = Modifier.weight(1F).drawWithContent {
-                drawContent()
-                val centerX = size.width / 2
-                val centerY = size.height / 2
-                val targetSize = 50f
-                val strokeWidth = 4f
-                val targetColor = Color.Blue
-                drawLine(
-                    targetColor,
-                    strokeWidth = strokeWidth,
-                    start = Offset(centerX - targetSize, centerY),
-                    end = Offset(centerX + targetSize, centerY))
-                drawLine(
-                    targetColor,
-                    strokeWidth = strokeWidth,
-                    start = Offset(centerX, centerY - targetSize),
-                    end = Offset(centerX, centerY + targetSize)
-                )
-                if (size.width >= size.height) {
-                    drawRect(
-                        color = Color.Gray,
-                        topLeft = Offset(centerX - (size.height / 2), centerY - (size.height / 2)),
-                        size = Size(size.height, size.height),
-                        style = Stroke(width = 2f)
+            modifier = Modifier
+                .weight(1F)
+                .drawWithContent {
+                    drawContent()
+                    val centerX = size.width / 2
+                    val centerY = size.height / 2
+                    val targetSize = 50f
+                    val strokeWidth = 4f
+                    val targetColor = Color.Blue
+                    drawLine(
+                        targetColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(centerX - targetSize, centerY),
+                        end = Offset(centerX + targetSize, centerY)
                     )
-                }
-            },
+                    drawLine(
+                        targetColor,
+                        strokeWidth = strokeWidth,
+                        start = Offset(centerX, centerY - targetSize),
+                        end = Offset(centerX, centerY + targetSize)
+                    )
+                    if (size.width >= size.height) {
+                        drawRect(
+                            color = Color.Gray,
+                            topLeft = Offset(
+                                centerX - (size.height / 2),
+                                centerY - (size.height / 2)
+                            ),
+                            size = Size(size.height, size.height),
+                            style = Stroke(width = 2f)
+                        )
+                    }
+                },
             factory = { ctx ->
                 previewView.apply {
                     scaleType = PreviewView.ScaleType.FILL_END
@@ -105,7 +112,7 @@ fun SizeEstimatorScreen(viewModel: MainViewModel) {
                             }
 
                             override fun onError(exception: ImageCaptureException) {
-                                viewModel.onError("Photo capture failed")
+                                viewModel.onError(context.getString(R.string.photo_capture_failed))
                             }
                         })
                 },
