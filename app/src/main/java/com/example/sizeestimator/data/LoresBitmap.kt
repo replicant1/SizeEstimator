@@ -18,8 +18,9 @@ import java.io.File
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
  * for the Tensor Flow model to process.
+ * @property a bitmap that has been cropped and scaled to have width and height
  */
-class LoresBitmap(private var squareBitmap: Bitmap) {
+class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
     companion object {
         fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap {
             return LoresBitmap(hiresBitmap.toSquare(LORES_IMAGE_SIZE_PX))
@@ -31,6 +32,8 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
         const val LEGEND_BOX_WIDTH_PX = 10
         const val LEGEND_ROW_HEIGHT_PX = 20
         const val LEGEND_BOX_TEXT_GAP_PX = 5
+        const val BOX_STROKE_WIDTH = 2F
+        const val LEGEND_TEXT_SIZE = 14F
         private val MARK_UP_COLORS: List<Int> =
             listOf(
                 Color.RED,
@@ -86,13 +89,13 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
     private fun drawLegend(canvas: Canvas, trace: MeasurementTrace) {
         val legendPaint = Paint().apply {
             style = Paint.Style.FILL
-            strokeWidth = 2F
+            strokeWidth = BOX_STROKE_WIDTH
         }
 
         val textPaint = Paint().apply {
-            textSize = 14F
+            textSize = LEGEND_TEXT_SIZE
             typeface = Typeface.MONOSPACE
-            strokeWidth = 2F
+            strokeWidth = BOX_STROKE_WIDTH
         }
 
         trace.scoreboard.list.forEachIndexed { index, item ->
@@ -127,7 +130,7 @@ class LoresBitmap(private var squareBitmap: Bitmap) {
     private fun drawBoundingBoxes(canvas: Canvas, trace: MeasurementTrace) {
         val rectPaint = Paint().apply {
             style = Paint.Style.STROKE
-            strokeWidth = 2F
+            strokeWidth = BOX_STROKE_WIDTH
             isAntiAlias = false
         }
 
