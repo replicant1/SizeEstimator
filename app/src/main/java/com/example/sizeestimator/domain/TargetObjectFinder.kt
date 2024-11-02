@@ -12,9 +12,9 @@ class TargetObjectFinder(private val referenceObject: ScoreboardItem) :
      * @return Index into receiving List of the target object. null if not found.
      */
     override fun process(scoreboard: Scoreboard) : ScoreboardItem? {
-        scoreboard.list.forEach { result ->
-            if (result.location.bottom < referenceObject.location.top) {
-                return result
+        scoreboard.list.forEach { item ->
+            if (item.location.bottom < referenceObject.location.top) {
+                return item
             }
         }
         return null

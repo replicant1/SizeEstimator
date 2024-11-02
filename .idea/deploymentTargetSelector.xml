@@ -13,9 +13,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="landscapeToEmptySquare()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="saveToAppCache()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

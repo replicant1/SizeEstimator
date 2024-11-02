@@ -1,6 +1,5 @@
 package com.example.sizeestimator.data
 
-import android.content.Context
 import android.graphics.Bitmap
 import timber.log.Timber
 import java.io.File
@@ -17,16 +16,16 @@ fun Bitmap.save(dir: File, filename: String) {
 
     val path = dir.absolutePath + File.separator + filename
 
-    Timber.d("About to save bitmap to cache file:$path")
+    Timber.d("About to save bitmap to $path")
 
     try {
         val fileOutputStream = FileOutputStream(path)
         this.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
         fileOutputStream.close()
 
-        Timber.d("Wrote bitmap OK to cache file $path")
+        Timber.d("Wrote bitmap OK to $path")
 
-    } catch (e: java.lang.Exception) {
+    } catch (e: Exception) {
         Timber.w(e)
     }
 }
@@ -35,7 +34,7 @@ fun Bitmap.save(dir: File, filename: String) {
  * Scale and crop to square
  */
 fun Bitmap.toSquare(side: Int): Bitmap {
-    Timber.d("Cropping bitmap to side = $side")
+    Timber.d("Cropping bitmap to side = $side px")
 
     // Cropping this much off width should make image square
     // NOTE: Assuming width > height
@@ -61,7 +60,7 @@ fun Bitmap.toSquare(side: Int): Bitmap {
 
     Timber.d("Squared bitmap has width = ${squaredBitmap.width}, height = ${squaredBitmap.height}")
 
-    // Scale down to size expected by TensorFlow model
+    // Scale down to desired size
     val scaledSquareBitmap = Bitmap.createScaledBitmap(
         squaredBitmap, side, side, false
     )

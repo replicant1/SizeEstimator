@@ -9,7 +9,6 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.Scoreboard
-import com.example.sizeestimator.domain.toRectF
 import com.example.sizeestimator.domain.toScoreboardItemList
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
@@ -18,7 +17,7 @@ import java.io.File
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
  * for the Tensor Flow model to process.
- * @property a bitmap that has been cropped and scaled to have width and height
+ * @property squareBitmap a bitmap that has been cropped and scaled to have width and height
  */
 class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
     companion object {
@@ -28,12 +27,12 @@ class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
 
         const val LORES_IMAGE_SIZE_PX = 300
         private val BOX_STROKE_EFFECT = DashPathEffect(floatArrayOf(1F, 1F), 1F)
-        const val LEGEND_MARGIN_PX = 10
-        const val LEGEND_BOX_WIDTH_PX = 10
-        const val LEGEND_ROW_HEIGHT_PX = 20
-        const val LEGEND_BOX_TEXT_GAP_PX = 5
-        const val BOX_STROKE_WIDTH = 2F
-        const val LEGEND_TEXT_SIZE = 14F
+        private const val BOX_STROKE_WIDTH_PX = 2F
+        private const val LEGEND_MARGIN_PX = 10
+        private const val LEGEND_BOX_WIDTH_PX = 10
+        private const val LEGEND_ROW_HEIGHT_PX = 20
+        private const val LEGEND_BOX_TEXT_GAP_PX = 5
+        private const val LEGEND_TEXT_SIZE_PX = 14F
         private val MARK_UP_COLORS: List<Int> =
             listOf(
                 Color.RED,
@@ -53,6 +52,10 @@ class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
         squareBitmap.save(dir, filename)
     }
 
+    /**
+     * Apply Tensor Flow Lite model to the picture passed into the constructor,
+     * to find bounding boxes of objects in the picture and the confidence of each.
+     */
     fun score(context: Context): Scoreboard {
         val model = SsdMobilenetV1.newInstance(context)
         val image = TensorImage.fromBitmap(squareBitmap)
@@ -84,18 +87,18 @@ class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
 
     /**
      * Draws a legend at top left into the given [canvas] showing color and score
-     * for all bounding boxes in the []
+     * for all bounding boxes in the bitmap.
      */
     private fun drawLegend(canvas: Canvas, trace: MeasurementTrace) {
         val legendPaint = Paint().apply {
             style = Paint.Style.FILL
-            strokeWidth = BOX_STROKE_WIDTH
+            strokeWidth = BOX_STROKE_WIDTH_PX
         }
 
         val textPaint = Paint().apply {
-            textSize = LEGEND_TEXT_SIZE
+            textSize = LEGEND_TEXT_SIZE_PX
             typeface = Typeface.MONOSPACE
-            strokeWidth = BOX_STROKE_WIDTH
+            strokeWidth = BOX_STROKE_WIDTH_PX
         }
 
         trace.scoreboard.list.forEachIndexed { index, item ->
@@ -128,21 +131,21 @@ class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
      * for reference and target objects are solid, others are dashed.
      */
     private fun drawBoundingBoxes(canvas: Canvas, trace: MeasurementTrace) {
-        val rectPaint = Paint().apply {
+        val boxPaint = Paint().apply {
             style = Paint.Style.STROKE
-            strokeWidth = BOX_STROKE_WIDTH
+            strokeWidth = BOX_STROKE_WIDTH_PX
             isAntiAlias = false
         }
 
         trace.scoreboard.list.forEachIndexed { index, item ->
-            rectPaint.pathEffect =
+            boxPaint.pathEffect =
                 if ((item == trace.targetObject) || (item == trace.referenceObject)) {
                     null
                 } else {
                     BOX_STROKE_EFFECT
                 }
-            rectPaint.color = MARK_UP_COLORS[index % MARK_UP_COLORS.size]
-            canvas.drawRect(item.location.toRectF(), rectPaint)
+            boxPaint.color = MARK_UP_COLORS[index % MARK_UP_COLORS.size]
+            canvas.drawRect(item.location.toRectF(), boxPaint)
         }
     }
 }

@@ -1,8 +1,5 @@
 package com.example.sizeestimator.domain
 
-/**
- * @param scoreboard output of the Tensor Flow model - bounding boxes with scores
- */
 class MeasurementEngine {
 
     data class MeasurementOptions(val minTop: Float)

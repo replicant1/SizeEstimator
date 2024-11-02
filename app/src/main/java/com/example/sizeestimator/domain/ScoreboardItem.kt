@@ -25,6 +25,15 @@ data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val r
     fun height(): Float {
         return abs(top - bottom)
     }
+
+    fun toRectF() : RectF {
+        return RectF(
+            this.left,
+            this.top,
+            this.right,
+            this.bottom,
+        )
+    }
 }
 
 /**
@@ -42,13 +51,4 @@ fun List<SsdMobilenetV1.DetectionResult>.toScoreboardItemList(): List<Scoreboard
             )
         )
     }
-}
-
-fun BoundingBox.toRectF() : RectF {
-    return RectF(
-        this.left,
-        this.top,
-        this.right,
-        this.bottom,
-    )
 }
