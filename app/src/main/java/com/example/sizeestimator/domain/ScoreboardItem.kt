@@ -5,17 +5,17 @@ import com.example.sizeestimator.ml.SsdMobilenetV1
 import kotlin.math.abs
 
 /**
- * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor.
-
+ * Needed because [SsdMobilenetV1.DetectionResult] (as generated) has private constructor
+ * which inhibits testing.
  */
-data class TestableDetectionResult(
+data class ScoreboardItem(
     val score: Float,
     val location: BoundingBox,
 )
 
 /**
  * The [RectF] property of [SsdMobilenetV1.DetectionResult.getLocationAsRectF] is mocked
- * for (test) source tree.
+ * for (test) source tree so this provides an alternative.
  */
 data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val right: Float) {
     fun width(): Float {
@@ -25,14 +25,23 @@ data class BoundingBox(val top: Float, val left: Float, val bottom: Float, val r
     fun height(): Float {
         return abs(top - bottom)
     }
+
+    fun toRectF() : RectF {
+        return RectF(
+            this.left,
+            this.top,
+            this.right,
+            this.bottom,
+        )
+    }
 }
 
 /**
- * Convert between models, information is preserved.
+ * Convert between Tensor Flow models and our own [Scoreboard] model
  */
-fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<TestableDetectionResult> {
+fun List<SsdMobilenetV1.DetectionResult>.toScoreboardItemList(): List<ScoreboardItem> {
     return map {
-        TestableDetectionResult(
+        ScoreboardItem(
             it.scoreAsFloat,
             BoundingBox(
                 top = it.locationAsRectF.top,
@@ -42,13 +51,4 @@ fun List<SsdMobilenetV1.DetectionResult>.toTestable(): List<TestableDetectionRes
             )
         )
     }
-}
-
-fun BoundingBox.toRectF() : RectF {
-    return RectF(
-        this.left,
-        this.top,
-        this.right,
-        this.bottom,
-    )
 }

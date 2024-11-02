@@ -6,8 +6,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
+import com.example.sizeestimator.data.LoresBitmap.Companion.LORES_IMAGE_SIZE_PX
+import com.example.sizeestimator.data.save
+import com.example.sizeestimator.domain.MeasurementEngine.Companion.measure
+import com.example.sizeestimator.domain.MeasurementEngine.MeasurementOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -45,37 +49,45 @@ class MainViewModel : ViewModel() {
         hiresPath: String,
         context: Context
     ) {
-        progressMonitorVisible.value = true
-
         viewModelScope.launch(Dispatchers.Default) {
-            Timber.d("About to crop photo to size expected by tensor flow model")
+            withContext(Dispatchers.Main) {
+                progressMonitorVisible.value = true
+            }
+
+            // Get the raw camera image and save for debugging
+            Timber.d("Retrieving raw camera image")
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
-            Timber.d("Camera image: width=${hiresBitmap.width}, height=${hiresBitmap.height}")
+            if (BuildConfig.DEBUG) {
+                hiresBitmap.save(context.cacheDir, HIRES_FILENAME)
+            }
 
+            // Crop and scale camera image to size Tensor Flow model expects and save for debugging
+            Timber.d("Scaling and cropping camera image to tensor flow size")
             val loresBitmap = LoresBitmap.fromHiresBitmap(hiresBitmap)
+            if (BuildConfig.DEBUG) {
+                loresBitmap.save(context.cacheDir, LORES_NO_LEGEND_FILENAME)
+            }
 
-            if (loresBitmap != null) {
-                Timber.d("Analysing the lores image")
-                val result = loresBitmap.analyse(
-                    context,
-                    AnalysisOptions(LoresBitmap.LORES_IMAGE_SIZE_PX / 2F) // vertical midpoint
-                )
+            // Apply Tensor Flow model and subsequent processing
+            Timber.d("Apply Tensor Flow and other algorithms to measure target object")
+            val scoreboard = loresBitmap.score(context)
+            val trace = measure(scoreboard, MeasurementOptions(minTop = LORES_IMAGE_SIZE_PX / 2f))
 
-                Timber.d("Add the bounding boxes and legend to the lores image")
-                loresBitmap.markup(result)
-
-                // Save bitmap
-                loresBitmap.save(context.cacheDir, LORES_FILENAME)
-
-                // Put result on screen
-                withContext(Dispatchers.Main) {
-                    _sizeText.value =
-                        "${result.targetObjectSizeMillimetres.first} x ${result.targetObjectSizeMillimetres.second} mm"
-                    println("******* Changing size text to ${_sizeText.value}")
+            if (trace != null) {
+                if (BuildConfig.DEBUG) {
+                    // Save small image marked up with legend etc for debugging
+                    loresBitmap.drawTrace(trace)
+                    loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)
                 }
             } else {
-                errorChannel.send("Failed to process image")
-                Timber.d("Failed to crop photo to size expected by tensor flow model")
+                Timber.d("Failed to measure target object")
+            }
+
+            // Put measurement results on screen
+            withContext(Dispatchers.Main) {
+                _sizeText.value =
+                    "${trace?.targetObjectSizeMm?.first} x ${trace?.targetObjectSizeMm?.second} mm"
+                Timber.d("Changing size text to ${_sizeText.value}")
             }
 
             withContext(Dispatchers.Main) {
@@ -85,7 +97,8 @@ class MainViewModel : ViewModel() {
     }
 
     companion object {
-        const val LORES_FILENAME = "lores.jpg"
+        private const val LORES_MARKED_UP_FILENAME = "lores_marked_up.jpg"
+        private const val LORES_NO_LEGEND_FILENAME = "lores.jpg"
         const val HIRES_FILENAME = "hires.jpg"
     }
 }
