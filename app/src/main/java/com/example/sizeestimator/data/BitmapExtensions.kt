@@ -36,8 +36,7 @@ fun Bitmap.save(dir: File, filename: String) {
 fun Bitmap.toSquare(side: Int): Bitmap {
     Timber.d("Cropping bitmap to side = $side px")
 
-    // Cropping this much off width should make image square
-    // NOTE: Assuming width > height
+    // Crop maximum dimension to make bitmap square
     val squaredBitmap = if (this.width >= this.height) {
         val horizontalCrop = (this.width - this.height) / 2
         Bitmap.createBitmap(
@@ -60,7 +59,7 @@ fun Bitmap.toSquare(side: Int): Bitmap {
 
     Timber.d("Squared bitmap has width = ${squaredBitmap.width}, height = ${squaredBitmap.height}")
 
-    // Scale down to desired size
+    // Scale croppsed bitmap down to desired size
     val scaledSquareBitmap = Bitmap.createScaledBitmap(
         squaredBitmap, side, side, false
     )
