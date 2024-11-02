@@ -65,32 +65,6 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     val analysisResultState = analysisResult.observeAsState()
     Timber.d("analysisResultState.value = ${analysisResultState.value}")
 
-    val referenceBox = remember {
-        derivedStateOf {
-            val sortedResults = analysisResultState.value?.sortedResults
-            val referenceObjectIndex = analysisResultState.value?.referenceObjectIndex
-            var boundingBox: BoundingBox? = null
-            if ((sortedResults != null) && (referenceObjectIndex != null) && (referenceObjectIndex != -1)) {
-                val referenceObject = sortedResults[referenceObjectIndex]
-                boundingBox = referenceObject.location
-            }
-            return@derivedStateOf boundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
-        }
-    }
-
-    val targetBox = remember {
-        derivedStateOf {
-            val sortedResults = analysisResultState.value?.sortedResults
-            val targetObjectIndex = analysisResult.value?.targetObjectIndex
-            var boundingBox: BoundingBox? = null
-            if ((sortedResults != null) && (targetObjectIndex != null) && (targetObjectIndex != -1)) {
-                val targetObject = sortedResults[targetObjectIndex]
-                boundingBox = targetObject.location
-            }
-            return@derivedStateOf boundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
-        }
-    }
-
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -100,6 +74,23 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
             modifier = Modifier
                 .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
                 .drawWithCache {
+                    val sortedResults = analysisResultState.value?.sortedResults
+                    val referenceObjectIndex = analysisResultState.value?.referenceObjectIndex
+                    var refBoundingBox: BoundingBox? = null
+                    if ((sortedResults != null) && (referenceObjectIndex != null) && (referenceObjectIndex != -1)) {
+                        val referenceObject = sortedResults[referenceObjectIndex]
+                        refBoundingBox = referenceObject.location
+                    }
+                    val referenceBox = refBoundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
+
+                    val targetObjectIndex = analysisResult.value?.targetObjectIndex
+                    var targBoundingBox: BoundingBox? = null
+                    if ((sortedResults != null) && (targetObjectIndex != null) && (targetObjectIndex != -1)) {
+                        val targetObject = sortedResults[targetObjectIndex]
+                        targBoundingBox = targetObject.location
+                    }
+                    val targetBox =  targBoundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
+
                     val centerX = size.width / 2
                     val centerY = size.height / 2
 
@@ -129,20 +120,20 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                     val scale = size.height / LoresBitmap.LORES_IMAGE_SIZE_PX.toFloat()
 
                     val referenceBoxTopLeft = Offset(
-                        boxXLeftOffset + referenceBox.value.left * scale,
-                        referenceBox.value.top * scale
+                        boxXLeftOffset + referenceBox.left * scale,
+                        referenceBox.top * scale
                     )
                     val referenceBoxSize = Size(
-                        referenceBox.value.width() * scale,
-                        referenceBox.value.height() * scale
+                        referenceBox.width() * scale,
+                        referenceBox.height() * scale
                     )
                     val targetBoxTopLeft = Offset(
-                        boxXLeftOffset + targetBox.value.left * scale,
-                        targetBox.value.top * scale
+                        boxXLeftOffset + targetBox.left * scale,
+                        targetBox.top * scale
                     )
                     val targetBoxSize = Size(
-                        targetBox.value.width() * scale,
-                        targetBox.value.height() * scale
+                        targetBox.width() * scale,
+                        targetBox.height() * scale
                     )
 
                     onDrawWithContent {
