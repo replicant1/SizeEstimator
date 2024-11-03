@@ -8,10 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.LoresBitmap.Companion.LORES_IMAGE_SIZE_PX
 import com.example.sizeestimator.data.save
-import com.example.sizeestimator.domain.MeasurementEngine.Companion.measure
-import com.example.sizeestimator.domain.MeasurementEngine.MeasurementOptions
+import com.example.sizeestimator.domain.MeasurementEngine
+import com.example.sizeestimator.domain.MeasurementTrace
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -24,12 +23,18 @@ import timber.log.Timber
 class MainViewModel : ViewModel() {
 
     // eg. "90 x 45 mm"
-    val _sizeText = MutableLiveData<String>()
+    private val _sizeText = MutableLiveData<String>()
     val sizeText: LiveData<String>
         get() = _sizeText
 
     // Is the progress monitor showing
-    val progressMonitorVisible = MutableLiveData(false)
+    private val _progressMonitorVisible = MutableLiveData(false)
+    val progressMonitorVisible: LiveData<Boolean>
+        get() = _progressMonitorVisible
+
+    private val _measurementTrace = MutableLiveData<MeasurementTrace?>()
+    val measurementTrace: LiveData<MeasurementTrace?>
+        get() = _measurementTrace
 
     private var errorChannel = Channel<String>()
     var errorFlow = errorChannel.receiveAsFlow()
@@ -49,13 +54,15 @@ class MainViewModel : ViewModel() {
         hiresPath: String,
         context: Context
     ) {
+        _progressMonitorVisible.value = true
         viewModelScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main) {
-                progressMonitorVisible.value = true
+                _progressMonitorVisible.value = true
             }
+        }
 
-            // Get the raw camera image and save for debugging
-            Timber.d("Retrieving raw camera image")
+        viewModelScope.launch(Dispatchers.Default) {
+            Timber.d("About to crop photo to size expected by tensor flow model")
             val hiresBitmap = BitmapFactory.decodeFile(hiresPath)
             if (BuildConfig.DEBUG) {
                 hiresBitmap.save(context.cacheDir, HIRES_FILENAME)
@@ -71,9 +78,16 @@ class MainViewModel : ViewModel() {
             // Apply Tensor Flow model and subsequent processing
             Timber.d("Apply Tensor Flow and other algorithms to measure target object")
             val scoreboard = loresBitmap.score(context)
-            val trace = measure(scoreboard, MeasurementOptions(minTop = LORES_IMAGE_SIZE_PX / 2f))
+            val trace = MeasurementEngine.measure(
+                scoreboard,
+                MeasurementEngine.MeasurementOptions(minTop = LoresBitmap.LORES_IMAGE_SIZE_PX / 2f)
+            )
 
             if (trace != null) {
+                withContext(Dispatchers.Main) {
+                    _measurementTrace.value = trace
+                }
+
                 if (BuildConfig.DEBUG) {
                     // Save small image marked up with legend etc for debugging
                     loresBitmap.drawTrace(trace)
@@ -91,7 +105,7 @@ class MainViewModel : ViewModel() {
             }
 
             withContext(Dispatchers.Main) {
-                progressMonitorVisible.value = false
+                _progressMonitorVisible.value = false
             }
         }
     }

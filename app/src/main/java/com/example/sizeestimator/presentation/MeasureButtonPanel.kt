@@ -28,6 +28,9 @@ import com.example.sizeestimator.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
+/**
+ * The right side of the interface - contains "Measure" button, progress bar, output text field.
+ */
 @Composable
 fun MeasureButtonPanel(
     sizeText: LiveData<String>,
@@ -46,6 +49,7 @@ fun MeasureButtonPanel(
         }
     }
     val progressState = progressMonitorVisible.observeAsState()
+    val sizeTextState = sizeText.observeAsState()
     Column(modifier = Modifier.padding(16.dp)) {
         Button(
             enabled = (progressState.value == false),
@@ -69,7 +73,6 @@ fun MeasureButtonPanel(
                     .padding(horizontal = 4.dp)
             )
         } else {
-            val sizeTextState = sizeText.observeAsState()
             Text(
                 text = if (sizeTextState.value == null) "" else
                     stringResource(R.string.size_prefix) + sizeTextState.value,
@@ -82,7 +85,7 @@ fun MeasureButtonPanel(
     }
 }
 
-@Preview(widthDp = 300, heightDp = 300)
+@Preview(widthDp = 200, heightDp = 300)
 @Composable
 fun ButtonPanelWithProgressPreview() {
     MeasureButtonPanel(
@@ -92,7 +95,7 @@ fun ButtonPanelWithProgressPreview() {
         flow { })
 }
 
-@Preview(widthDp = 300, heightDp = 300)
+@Preview(widthDp = 200, heightDp = 300)
 @Composable
 fun ButtonPanelNoProgressPreview() {
     MeasureButtonPanel(
