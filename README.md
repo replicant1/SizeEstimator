@@ -29,7 +29,7 @@ To use the app:
 - Open the file `build.gradle.kts(:app)` and change the value of `buildConfigField` called `REFERENCE_OBJECT_WIDTH_MM` to the width of your reference object in millimetres.
 - Build and start the app and hold the device in landscape orientation.
 - Hold the device so that it looks down on a plane such as a table top
-- Position the reference object at the bottom of the preview frame. The reference object should be something long and thin like a pen. The true length of the reference object should already have been assigned to the constant `REFERENCE_OBJECT_WIDTH_MM` in `MainActivity.kt`
+- Position the reference object at the bottom of the preview frame. The reference object should be something long and thin like a pen.
 - The reference object should be below the vertical mid-point of the preview image.
 - The target object (to be measured) should be placed above the reference object
 - When both reference and target objects are correctly positioned, tap the `Measure` button and the estimated size of the target object in millimetres will be printed on the screen underneath the `Measure` button.
