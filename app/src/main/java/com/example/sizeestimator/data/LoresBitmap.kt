@@ -7,162 +7,33 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Typeface
-import androidx.annotation.VisibleForTesting
-import com.example.sizeestimator.domain.Analyser
-import com.example.sizeestimator.domain.AnalysisResult
-import com.example.sizeestimator.domain.toRectF
-import com.example.sizeestimator.domain.toTestable
+import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.Scoreboard
+import com.example.sizeestimator.domain.toScoreboardItemList
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
-import timber.log.Timber
 import java.io.File
-import java.io.FileOutputStream
 
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
  * for the Tensor Flow model to process.
+ * @property squareBitmap a bitmap that has been cropped and scaled to have width and height
  */
-class LoresBitmap(private var loresBitmap: Bitmap) {
-
-    data class AnalysisOptions(val minTop: Float)
-
-    fun analyse(context: Context, options: AnalysisOptions): AnalysisResult {
-        val analysisStartTime = System.currentTimeMillis()
-        val model = SsdMobilenetV1.newInstance(context)
-        val image = TensorImage.fromBitmap(loresBitmap)
-        val outputs = model.process(image)
-        val analyser = Analyser(outputs.detectionResultList.toTestable())
-        val analysisEndTime = System.currentTimeMillis()
-
-        Timber.d("LoresBitmap.analyse() time = ${analysisEndTime - analysisStartTime} milliseconds")
-
-        model.close()
-
-        return analyser.analyse(options)
-    }
-
-    /**
-     * Draw bounding boxes, scores and a legend on this [LoresBitmap] that visualizes
-     * the given [analysisResult].
-     */
-    fun markup(analysisResult: AnalysisResult) {
-        val rectPaint = Paint()
-        rectPaint.style = Paint.Style.STROKE
-        rectPaint.strokeWidth = 2F
-        rectPaint.isAntiAlias = false
-
-        val textPaint = Paint()
-        textPaint.textSize = 14F
-        textPaint.typeface = Typeface.MONOSPACE
-        textPaint.strokeWidth = 2F
-
-        val legendPaint = Paint()
-        legendPaint.style = Paint.Style.FILL
-        legendPaint.strokeWidth = 2F
-
-        val mutableBitmap = Bitmap.createBitmap(
-            loresBitmap.width,
-            loresBitmap.height,
-            Bitmap.Config.RGB_565
-        )
-        val canvas = Canvas(mutableBitmap)
-
-        // Copy mutable bitmap to the canvas so that we can draw on top of it
-        canvas.drawBitmap(loresBitmap, 0F, 0F, rectPaint)
-
-        analysisResult.sortedResults.forEachIndexed { index: Int, result ->
-            // Make the bounding boxes for reference and target objects standout as solid while
-            // others are dashed.
-            if ((index == analysisResult.targetObjectIndex) || (index == analysisResult.referenceObjectIndex)) {
-                rectPaint.pathEffect = null
-            } else {
-                rectPaint.pathEffect = DashPathEffect(floatArrayOf(1F, 1F), 1F)
-            }
-            rectPaint.color = MARKUP_COLORS[index % MARKUP_COLORS.size]
-            canvas.drawRect(result.location.toRectF(), rectPaint)
-        }
-
-        // Draw the legend at top left of the image
-        analysisResult.sortedResults.forEachIndexed { index, result ->
-            legendPaint.color = MARKUP_COLORS[index]
-            canvas.drawRect(
-                android.graphics.Rect(
-                    10,
-                    10 + (index * 20),
-                    20,
-                    20 + (index * 20)
-                ),
-                legendPaint
-            )
-
-            textPaint.color = MARKUP_COLORS[index]
-            canvas.drawText(
-                result.score.toString(),
-                25F,
-                20F + (index * 20),
-                textPaint
-            )
-        }
-        loresBitmap = mutableBitmap
-    }
-
-    /**
-     * @return The bitmaps filename, or null if couldn't save
-     */
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    fun save(dir: File, filename: String) {
-        if (!dir.exists()) {
-            dir.mkdir()
-        }
-
-        val path = dir.absolutePath + File.separator + filename
-
-        Timber.d("About to save bitmap to file: %s", path)
-
-        try {
-            val fileOutputStream = FileOutputStream(path)
-            loresBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-            fileOutputStream.close()
-
-            Timber.d("Wrote bitmap OK to file " + path)
-
-        } catch (e: java.lang.Exception) {
-            Timber.w(e)
-        }
-    }
-
+class LoresBitmap private constructor(private var squareBitmap: Bitmap) {
     companion object {
-        /**
-         * Take a landscape orientation image straight off the preview image and scale/crop it
-         * down to the size that the TensorFlow model can process.
-         */
-        fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap? {
-            Timber.d("Cropping bitmap of width = ${hiresBitmap.width} + , height = ${hiresBitmap.height}")
-
-            // Cropping this much off width should make image square
-            // NOTE: Assuming width > height
-            val horizontalCrop = (hiresBitmap.width - hiresBitmap.height) / 2
-            val squaredBitmap = Bitmap.createBitmap(
-                hiresBitmap,
-                horizontalCrop,
-                0,
-                hiresBitmap.height,
-                hiresBitmap.height
-            )
-
-            Timber.d("Squared bitmap has width = ${squaredBitmap.width} + height = ${squaredBitmap.height}")
-
-            // Scale down to size expected by TensorFlow model
-            val scaledSquareBitmap = Bitmap.createScaledBitmap(
-                squaredBitmap, LORES_IMAGE_SIZE_PX, LORES_IMAGE_SIZE_PX, false
-            )
-            Timber.d("Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}")
-
-            return LoresBitmap(scaledSquareBitmap)
+        fun fromHiresBitmap(hiresBitmap: Bitmap): LoresBitmap {
+            return LoresBitmap(hiresBitmap.toSquare(LORES_IMAGE_SIZE_PX))
         }
 
         const val LORES_IMAGE_SIZE_PX = 300
-        val MARKUP_COLORS: List<Int> =
+        private val BOX_STROKE_EFFECT = DashPathEffect(floatArrayOf(1F, 1F), 1F)
+        private const val BOX_STROKE_WIDTH_PX = 2F
+        private const val LEGEND_MARGIN_PX = 10
+        private const val LEGEND_BOX_WIDTH_PX = 10
+        private const val LEGEND_ROW_HEIGHT_PX = 20
+        private const val LEGEND_BOX_TEXT_GAP_PX = 5
+        private const val LEGEND_TEXT_SIZE_PX = 14F
+        private val MARK_UP_COLORS: List<Int> =
             listOf(
                 Color.RED,
                 Color.YELLOW,
@@ -175,5 +46,106 @@ class LoresBitmap(private var loresBitmap: Bitmap) {
                 Color.LTGRAY,
                 Color.MAGENTA
             )
+    }
+
+    fun save(dir: File, filename: String) {
+        squareBitmap.save(dir, filename)
+    }
+
+    /**
+     * Apply Tensor Flow Lite model to the picture passed into the constructor,
+     * to find bounding boxes of objects in the picture and the confidence of each.
+     */
+    fun score(context: Context): Scoreboard {
+        val model = SsdMobilenetV1.newInstance(context)
+        val image = TensorImage.fromBitmap(squareBitmap)
+        val outputs = model.process(image)
+        model.close()
+        return Scoreboard(outputs.detectionResultList.toScoreboardItemList())
+    }
+
+    /**
+     * Draw bounding boxes, scores and a legend on this [LoresBitmap] that visualizes
+     * the given [trace]. Mutates the bitmap supplied to the constructor.
+     */
+    fun drawTrace(trace: MeasurementTrace) {
+        val mutableBitmap = Bitmap.createBitmap(
+            squareBitmap.width,
+            squareBitmap.height,
+            Bitmap.Config.RGB_565
+        )
+        val canvas = Canvas(mutableBitmap)
+
+        // Copy mutable bitmap to the canvas then draw legend and bounding
+        // boxes on top of it
+        canvas.drawBitmap(squareBitmap, 0F, 0F, Paint())
+        drawLegend(canvas, trace)
+        drawBoundingBoxes(canvas, trace)
+
+        squareBitmap = mutableBitmap
+    }
+
+    /**
+     * Draws a legend at top left into the given [canvas] showing color and score
+     * for all bounding boxes in the bitmap.
+     */
+    private fun drawLegend(canvas: Canvas, trace: MeasurementTrace) {
+        val legendPaint = Paint().apply {
+            style = Paint.Style.FILL
+            strokeWidth = BOX_STROKE_WIDTH_PX
+        }
+
+        val textPaint = Paint().apply {
+            textSize = LEGEND_TEXT_SIZE_PX
+            typeface = Typeface.MONOSPACE
+            strokeWidth = BOX_STROKE_WIDTH_PX
+        }
+
+        trace.scoreboard.list.forEachIndexed { index, item ->
+            legendPaint.color = MARK_UP_COLORS[index]
+
+            // Draw a filled square in the current item's colour
+            canvas.drawRect(
+                android.graphics.Rect(
+                    LEGEND_MARGIN_PX,
+                    LEGEND_MARGIN_PX + (index * LEGEND_ROW_HEIGHT_PX),
+                    LEGEND_MARGIN_PX + LEGEND_BOX_WIDTH_PX,
+                    LEGEND_ROW_HEIGHT_PX + (index * LEGEND_ROW_HEIGHT_PX)
+                ),
+                legendPaint
+            )
+
+            // Draw the numerical score for current item
+            textPaint.color = MARK_UP_COLORS[index]
+            canvas.drawText(
+                item.score.toString(),
+                (LEGEND_MARGIN_PX + LEGEND_BOX_WIDTH_PX + LEGEND_BOX_TEXT_GAP_PX).toFloat(),
+                (LEGEND_ROW_HEIGHT_PX + (index * LEGEND_ROW_HEIGHT_PX)).toFloat(),
+                textPaint
+            )
+        }
+    }
+
+    /**
+     * Draws the bounding boxes in the [trace] in the appropriate colours and patterns. Boxes
+     * for reference and target objects are solid, others are dashed.
+     */
+    private fun drawBoundingBoxes(canvas: Canvas, trace: MeasurementTrace) {
+        val boxPaint = Paint().apply {
+            style = Paint.Style.STROKE
+            strokeWidth = BOX_STROKE_WIDTH_PX
+            isAntiAlias = false
+        }
+
+        trace.scoreboard.list.forEachIndexed { index, item ->
+            boxPaint.pathEffect =
+                if ((item == trace.targetObject) || (item == trace.referenceObject)) {
+                    null
+                } else {
+                    BOX_STROKE_EFFECT
+                }
+            boxPaint.color = MARK_UP_COLORS[index % MARK_UP_COLORS.size]
+            canvas.drawRect(item.location.toRectF(), boxPaint)
+        }
     }
 }

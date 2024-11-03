@@ -17,12 +17,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.sizeestimator.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -34,7 +36,7 @@ fun MeasureButtonPanel(
     sizeText: LiveData<String>,
     progressMonitorVisible: LiveData<Boolean>,
     onButtonClick: () -> Unit,
-    errorFlow : Flow<String>
+    errorFlow: Flow<String>
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -57,9 +59,11 @@ fun MeasureButtonPanel(
                 contentColor = Color.White,
                 containerColor = Color.Blue
             ),
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6F)
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.6F)
         ) {
-            Text(text = "Measure", fontSize = 24.sp)
+            Text(text = stringResource(R.string.measure_button_label), fontSize = 24.sp)
         }
         Spacer(modifier = Modifier.weight(1F))
         if (progressState.value == true) {
@@ -70,7 +74,8 @@ fun MeasureButtonPanel(
             )
         } else {
             Text(
-                text = if (sizeTextState.value == null) "" else "Size: ${sizeTextState.value}",
+                text = if (sizeTextState.value == null) "" else
+                    stringResource(R.string.size_prefix) + sizeTextState.value,
                 textAlign = TextAlign.Center,
                 fontSize = 24.sp,
                 modifier = Modifier.fillMaxWidth(1F)

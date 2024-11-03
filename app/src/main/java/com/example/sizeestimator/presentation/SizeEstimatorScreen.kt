@@ -55,6 +55,8 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
         cameraProvider.bindToLifecycle(lifecycleOwner, cameraxSelector, preview, imageCapture)
         preview.setSurfaceProvider(previewView.surfaceProvider)
     }
+    Row (modifier = Modifier
+        .fillMaxSize()) {
 
     val analysisResultState = analysisResult.observeAsState()
     Timber.d("analysisResultState.value = ${analysisResultState.value}")
@@ -71,7 +73,6 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                 previewView.apply {
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                    setBackgroundColor(Color.Yellow.toArgb())
                 }
             }
         )
@@ -99,12 +100,11 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
                             }
 
                             override fun onError(exception: ImageCaptureException) {
-                                viewModel.onError("Photo capture failed")
+                                viewModel.onError(context.getString(R.string.photo_capture_failed))
                             }
                         })
                 },
-                viewModel.errorFlow
-            )
+                viewModel.errorFlow)
         }
     }
 }
