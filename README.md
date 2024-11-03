@@ -40,16 +40,19 @@ To use the app:
 - Each bounding box has a `score` associated with it
 - The bounding box for the reference object is found by identifying the bounding box with the highest score that is below the midpoint of the preview image.
 - The bounding box for the target object is the bounding box with the highest score that is above the reference object's bounding box.
-- The reference object's width in millimetres, which is hardcoded into `MainActivity`, is divided by its bounding box's width in pixels to get a scaling factor.
+- The reference object's width in millimetres is divided by its bounding box's width in pixels to get a scaling factor.
 - That scaling factor is applied to the pixel width and height of the target object's bounding box to calculate the target object's real size in millimetres.
 
 # Artifacts
 
-The algorithm above can be visualized by looking at the following samples. The app generates two images as a side-effect of each measurement taken. The first is obtained by cropping the camera image to square, then scaling it down to 300 x 300 pixels, which is the size expected by the Tensor Flow model. The model is then applied to the 300 x 300 image, which results in a set of bounding boxes for each object found. Those boxes and an accompanying legend appear below. The two boxes that are drawn with a solid line correspond to the reference and target objects. The rest are drawn with a dashed line.
+The algorithm above can be visualized by looking at the following samples. The app generates three images as a side-effect of each measurement taken:
+- The raw camera image in landscape orientation
+- The second image is obtained by cropping the camera image to square, then scaling it down to 300 x 300 pixels, which is the size expected by the Tensor Flow model. 
+- The model is then applied to the 300 x 300 image, which results in a set of bounding boxes for each object found. Those boxes and an accompanying legend appear below. The two boxes that are drawn with a solid line correspond to the reference and target objects. The rest are drawn with a dashed line.
 
 ## Sample 1
 
-To view these artifacts you need to look in the cache dir for the app. eg. `/data/data/com.example.sizeestimator/cache`
+To view these artifacts you need to look in the cache dir for the app. eg. `/data/data/com.example.sizeestimator/cache`. Use the `Device Explorer` in Android Studio to do this.
 
 ![Cropped](/doc/sample1/cropped.jpg)
 ![Markedup](/doc/sample1/marked_up.jpg)
