@@ -8,7 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.LoresBitmap.AnalysisOptions
+import com.example.sizeestimator.data.save
+import com.example.sizeestimator.domain.MeasurementEngine
+import com.example.sizeestimator.domain.MeasurementTrace
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -30,9 +32,9 @@ class MainViewModel : ViewModel() {
     val progressMonitorVisible: LiveData<Boolean>
         get() = _progressMonitorVisible
 
-    private val _analysisResult = MutableLiveData<AnalysisResult>()
-    val analysisResult: LiveData<AnalysisResult>
-        get() = _analysisResult
+    private val _measurementTrace = MutableLiveData<MeasurementTrace?>()
+    val measurementTrace: LiveData<MeasurementTrace?>
+        get() = _measurementTrace
 
     private var errorChannel = Channel<String>()
     var errorFlow = errorChannel.receiveAsFlow()
@@ -55,8 +57,9 @@ class MainViewModel : ViewModel() {
         _progressMonitorVisible.value = true
         viewModelScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main) {
-                progressMonitorVisible.value = true
+                _progressMonitorVisible.value = true
             }
+        }
 
         viewModelScope.launch(Dispatchers.Default) {
             Timber.d("About to crop photo to size expected by tensor flow model")
@@ -75,9 +78,16 @@ class MainViewModel : ViewModel() {
             // Apply Tensor Flow model and subsequent processing
             Timber.d("Apply Tensor Flow and other algorithms to measure target object")
             val scoreboard = loresBitmap.score(context)
-            val trace = measure(scoreboard, MeasurementOptions(minTop = LORES_IMAGE_SIZE_PX / 2f))
+            val trace = MeasurementEngine.measure(
+                scoreboard,
+                MeasurementEngine.MeasurementOptions(minTop = LoresBitmap.LORES_IMAGE_SIZE_PX / 2f)
+            )
 
             if (trace != null) {
+                withContext(Dispatchers.Main) {
+                    _measurementTrace.value = trace
+                }
+
                 if (BuildConfig.DEBUG) {
                     // Save small image marked up with legend etc for debugging
                     loresBitmap.drawTrace(trace)

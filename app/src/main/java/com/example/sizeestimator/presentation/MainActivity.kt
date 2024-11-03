@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         setContentView(viewBinding.root)
 
         viewBinding.composeView.setContent {
-            SizeEstimatorScreen(viewModel, viewModel.analysisResult)
+            SizeEstimatorScreen(viewModel, viewModel.measurementTrace)
         }
 
         if (!allPermissionsGranted()) {

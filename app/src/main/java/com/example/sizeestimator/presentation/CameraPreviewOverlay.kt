@@ -8,37 +8,28 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.sizeestimator.data.LoresBitmap
-
-import com.example.sizeestimator.domain.AnalysisResult
 import com.example.sizeestimator.domain.BoundingBox
+
+import com.example.sizeestimator.domain.MeasurementTrace
 
 /**
  * Draws an overlay on top of the camera preview that shows the target and reference bounding
- * boxes as per [analysisResultState].
+ * boxes as per [trace].
  */
-fun drawOverlay(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.() ->  DrawResult {
+fun drawOverlay(trace: State<MeasurementTrace?>): CacheDrawScope.() -> DrawResult {
     return {
+        println("** Into lambda.drawOverlay **")
         // Values in this section are only recalculated when the state variables they depend upon
         // change value. The drawing commands in the "onDrawContent" lambda are redrawn with every blit.
-        val sortedResults = analysisResultState.value?.sortedResults
+        val sortedItems = trace.value?.scoreboard?.list
 
         // Find reference object's bounding box
-        val referenceObjectIndex = analysisResultState.value?.referenceObjectIndex
-        var refBoundingBox: BoundingBox? = null
-        if ((sortedResults != null) && (referenceObjectIndex != null) && (referenceObjectIndex != -1)) {
-            val referenceObject = sortedResults[referenceObjectIndex]
-            refBoundingBox = referenceObject.location
-        }
-        val referenceBox = refBoundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
+        val refBoundingBox: BoundingBox? = trace.value?.referenceObject?.location
+        val referenceBox: BoundingBox = refBoundingBox ?: BoundingBox(10F, 10F, 20f, 20f)
 
         // Find target object's bounding box
-        val targetObjectIndex = analysisResultState.value?.targetObjectIndex
-        var targBoundingBox: BoundingBox? = null
-        if ((sortedResults != null) && (targetObjectIndex != null) && (targetObjectIndex != -1)) {
-            val targetObject = sortedResults[targetObjectIndex]
-            targBoundingBox = targetObject.location
-        }
-        val targetBox = targBoundingBox ?: BoundingBox(10f, 10f, 20f, 20f)
+        val targBoundingBox: BoundingBox? = trace.value?.targetObject?.location
+        val targetBox: BoundingBox = targBoundingBox ?: BoundingBox(10f, 50f, 20f, 20f)
 
         val centerX = size.width / 2
         val centerY = size.height / 2
@@ -54,7 +45,7 @@ fun drawOverlay(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.
         // Bounding boxes for reference and target objects
         val boxXLeftOffset = (size.width - size.height) / 2
         val boxStrokeWidth = 4f
-        val referenceBoxColor = Color.Red
+        val referenceBoxColor = Color.Yellow
         val targetBoxColor = Color.Green
 
         // Lores square viewport in center
@@ -68,24 +59,32 @@ fun drawOverlay(analysisResultState : State<AnalysisResult?>) :  CacheDrawScope.
         // Scaling factor (assume landscape) - from lores to preview
         val scale = size.height / LoresBitmap.LORES_IMAGE_SIZE_PX.toFloat()
 
-        val referenceBoxTopLeft = Offset(
+        var referenceBoxTopLeft: Offset? = null
+        var referenceBoxSize: Size? = null
+
+        referenceBoxTopLeft = Offset(
             boxXLeftOffset + referenceBox.left * scale,
             referenceBox.top * scale
         )
-        val referenceBoxSize = Size(
+        referenceBoxSize = Size(
             referenceBox.width() * scale,
             referenceBox.height() * scale
         )
-        val targetBoxTopLeft = Offset(
+
+        var targetBoxTopLeft: Offset? = null
+        var targetBoxSize: Size? = null
+
+        targetBoxTopLeft = Offset(
             boxXLeftOffset + targetBox.left * scale,
             targetBox.top * scale
         )
-        val targetBoxSize = Size(
+        targetBoxSize = Size(
             targetBox.width() * scale,
             targetBox.height() * scale
         )
 
         onDrawWithContent {
+//            println("** Into onDrawWithContent **")
             drawContent()
 
             // Horizontal stroke of the cross-hair

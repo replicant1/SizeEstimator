@@ -19,22 +19,21 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.sizeestimator.domain.AnalysisResult
+import com.example.sizeestimator.R
+import com.example.sizeestimator.domain.MeasurementTrace
 import timber.log.Timber
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Composable
-fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<AnalysisResult>) {
+fun SizeEstimatorScreen(viewModel: MainViewModel, trace: LiveData<MeasurementTrace?>) {
     val lensFacing = CameraSelector.LENS_FACING_BACK
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -58,58 +57,61 @@ fun SizeEstimatorScreen(viewModel: MainViewModel, analysisResult: LiveData<Analy
     Row (modifier = Modifier
         .fillMaxSize()) {
 
-    val analysisResultState = analysisResult.observeAsState()
-    Timber.d("analysisResultState.value = ${analysisResultState.value}")
+        val traceState = trace.observeAsState()
+        Timber.d("traceState.value = ${traceState.value}")
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        AndroidView(
+        Row(
             modifier = Modifier
-                .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
-                .drawWithCache(drawOverlay(analysisResultState)) ,
-            factory = {
-                previewView.apply {
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
-                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                }
-            }
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(1F)
-                .size(100.dp)
+                .fillMaxSize()
         ) {
-            MeasureButtonPanel(
-                sizeText = viewModel.sizeText,
-                progressMonitorVisible = viewModel.progressMonitorVisible,
-                {
-                    val hiresPath =
-                        context.cacheDir.absolutePath + File.separator + MainViewModel.HIRES_FILENAME
-                    val hiresOutputOptions = ImageCapture.OutputFileOptions.Builder(File(hiresPath))
-                        .build()
+            AndroidView(
+                modifier = Modifier
+                    .aspectRatio(4f / 3f) // same as Preview, PreviewView and ImageCapture
+                    .drawWithCache(drawOverlay(traceState)),
+                factory = {
+                    previewView.apply {
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                    }
+                }
+            )
 
-                    imageCapture.takePicture(hiresOutputOptions,
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
-                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                viewModel.onHiresImageSaved(hiresPath, context)
+            Box(
+                modifier = Modifier
+                    .weight(1F)
+                    .size(100.dp)
+            ) {
+                MeasureButtonPanel(
+                    sizeText = viewModel.sizeText,
+                    progressMonitorVisible = viewModel.progressMonitorVisible,
+                    {
+                        val hiresPath =
+                            context.cacheDir.absolutePath + File.separator + MainViewModel.HIRES_FILENAME
+                        val hiresOutputOptions =
+                            ImageCapture.OutputFileOptions.Builder(File(hiresPath))
+                                .build()
 
-                            }
+                        imageCapture.takePicture(hiresOutputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                    viewModel.onHiresImageSaved(hiresPath, context)
 
-                            override fun onError(exception: ImageCaptureException) {
-                                viewModel.onError(context.getString(R.string.photo_capture_failed))
-                            }
-                        })
-                },
-                viewModel.errorFlow)
+                                }
+
+                                override fun onError(exception: ImageCaptureException) {
+                                    viewModel.onError(context.getString(R.string.photo_capture_failed))
+                                }
+                            })
+                    },
+                    viewModel.errorFlow
+                )
+            }
         }
     }
 }
 
-private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
+suspend fun Context.getCameraProvider(): ProcessCameraProvider =
     suspendCoroutine { continuation ->
         ProcessCameraProvider.getInstance(this).also { cameraProvider ->
             cameraProvider.addListener({
