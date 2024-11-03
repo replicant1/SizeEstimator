@@ -18,18 +18,14 @@ import com.example.sizeestimator.domain.MeasurementTrace
  */
 fun drawOverlay(trace: State<MeasurementTrace?>): CacheDrawScope.() -> DrawResult {
     return {
-        println("** Into lambda.drawOverlay **")
         // Values in this section are only recalculated when the state variables they depend upon
         // change value. The drawing commands in the "onDrawContent" lambda are redrawn with every blit.
-        val sortedItems = trace.value?.scoreboard?.list
 
         // Find reference object's bounding box
-        val refBoundingBox: BoundingBox? = trace.value?.referenceObject?.location
-        val referenceBox: BoundingBox = refBoundingBox ?: BoundingBox(10F, 10F, 20f, 20f)
+        val referenceBox: BoundingBox? = trace.value?.referenceObject?.location
 
         // Find target object's bounding box
-        val targBoundingBox: BoundingBox? = trace.value?.targetObject?.location
-        val targetBox: BoundingBox = targBoundingBox ?: BoundingBox(10f, 50f, 20f, 20f)
+        val targetBox: BoundingBox? = trace.value?.targetObject?.location
 
         val centerX = size.width / 2
         val centerY = size.height / 2
@@ -62,29 +58,32 @@ fun drawOverlay(trace: State<MeasurementTrace?>): CacheDrawScope.() -> DrawResul
         var referenceBoxTopLeft: Offset? = null
         var referenceBoxSize: Size? = null
 
-        referenceBoxTopLeft = Offset(
-            boxXLeftOffset + referenceBox.left * scale,
-            referenceBox.top * scale
-        )
-        referenceBoxSize = Size(
-            referenceBox.width() * scale,
-            referenceBox.height() * scale
-        )
+        if (referenceBox != null) {
+            referenceBoxTopLeft = Offset(
+                boxXLeftOffset + referenceBox.left * scale,
+                referenceBox.top * scale
+            )
+            referenceBoxSize = Size(
+                referenceBox.width() * scale,
+                referenceBox.height() * scale
+            )
+        }
 
         var targetBoxTopLeft: Offset? = null
         var targetBoxSize: Size? = null
 
-        targetBoxTopLeft = Offset(
-            boxXLeftOffset + targetBox.left * scale,
-            targetBox.top * scale
-        )
-        targetBoxSize = Size(
-            targetBox.width() * scale,
-            targetBox.height() * scale
-        )
+        if (targetBox != null) {
+            targetBoxTopLeft = Offset(
+                boxXLeftOffset + targetBox.left * scale,
+                targetBox.top * scale
+            )
+            targetBoxSize = Size(
+                targetBox.width() * scale,
+                targetBox.height() * scale
+            )
+        }
 
         onDrawWithContent {
-//            println("** Into onDrawWithContent **")
             drawContent()
 
             // Horizontal stroke of the cross-hair
@@ -113,20 +112,24 @@ fun drawOverlay(trace: State<MeasurementTrace?>): CacheDrawScope.() -> DrawResul
             )
 
             // Bounding box of the reference object as per analysis
-            drawRect(
-                color = referenceBoxColor,
-                topLeft = referenceBoxTopLeft,
-                size = referenceBoxSize,
-                style = Stroke(width = boxStrokeWidth)
-            )
+            if ((referenceBoxTopLeft != null) && (referenceBoxSize != null)) {
+                drawRect(
+                    color = referenceBoxColor,
+                    topLeft = referenceBoxTopLeft,
+                    size = referenceBoxSize,
+                    style = Stroke(width = boxStrokeWidth)
+                )
+            }
 
             // Bounding box of the target object as per analysis
-            drawRect(
-                color = targetBoxColor,
-                topLeft = targetBoxTopLeft,
-                size = targetBoxSize,
-                style = Stroke(width = boxStrokeWidth)
-            )
+            if ((targetBoxTopLeft != null) && (targetBoxSize != null)) {
+                drawRect(
+                    color = targetBoxColor,
+                    topLeft = targetBoxTopLeft,
+                    size = targetBoxSize,
+                    style = Stroke(width = boxStrokeWidth)
+                )
+            }
         }
     }
 }
