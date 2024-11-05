@@ -13,10 +13,13 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="save() (1)">
+      <SelectionState runConfigName="createWithHiresBitmapGivesResizedBitmap()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="BitmapFileExtensionsTest">
+      <SelectionState runConfigName="load_hires_jpg()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="score()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

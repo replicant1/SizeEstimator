@@ -14,7 +14,7 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class BitmapFileExtensionsTest {
 
-    lateinit var context : Context
+    private lateinit var context : Context
 
     @Before
     fun setUp() {
