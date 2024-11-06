@@ -9,7 +9,7 @@ import com.example.sizeestimator.domain.MeasurementTrace
  */
 interface MTDrawer {
     /**
-     * @param bitmap Mutable bitmap to draw on
+     * @param bitmap Bitmap to draw on
      * @param data to be drawn into the bitmap
      */
     fun draw(bitmap: LoresBitmap, trace: MeasurementTrace)

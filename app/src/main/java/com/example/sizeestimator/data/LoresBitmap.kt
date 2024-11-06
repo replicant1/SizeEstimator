@@ -17,7 +17,7 @@ import java.io.File
 /**
  * A small bitmap that has been scaled down and cropped from a raw camera image, and is small enough
  * for the Tensor Flow model to process.
- * @property squareBitmap a bitmap that has been cropped and scaled to have width and height
+ * @property squareBitmap a mutable bitmap that has been cropped and scaled to have width and height
  */
 class LoresBitmap private constructor(public var squareBitmap: Bitmap) {
     companion object {

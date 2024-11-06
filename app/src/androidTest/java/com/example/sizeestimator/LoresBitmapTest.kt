@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.sizeestimator.data.LoresBitmap
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -25,7 +24,7 @@ class LoresBitmapTest {
     }
 
     @Test
-    fun save() {
+    fun scaleDownDynamicallyCreatedBitmapAndSaveAndReloadFromFile() {
         val hires = Bitmap.createBitmap(400, 500, Bitmap.Config.RGB_565)
 
         // Save scaled down bitmap as "test.jpg"
@@ -33,7 +32,6 @@ class LoresBitmapTest {
         lores.save(context.filesDir, "test.jpg")
 
         val path = context.filesDir.path + File.separator + "test.jpg"
-        println("** path = $path")
         val input = BitmapFactory.decodeFile(path)
 
         // Check that "test.jpg" is 300x300
@@ -42,11 +40,10 @@ class LoresBitmapTest {
     }
 
     @Test
-    fun score() {
+    fun scaledDownAssetImageAndScoreWithTensorFlowModel() {
         // Load "hires.jpg" from assets folder
         val fis: InputStream = context.assets.open("hires.jpg")
         val hiresBitmap = BitmapFactory.decodeStream(fis)
-        println("** hiresBitmap.width = ${hiresBitmap.width}, hiresBitmap.height = ${hiresBitmap.height}")
         assertEquals(4080, hiresBitmap.width)
         assertEquals(3072, hiresBitmap.height)
 

@@ -13,13 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="createWithHiresBitmapGivesResizedBitmap()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="load_hires_jpg()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="score()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="loadAssetImageAndDrawBoundingBoxes()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="LoresBitmapTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="loadAssetImageAndDrawLegend()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

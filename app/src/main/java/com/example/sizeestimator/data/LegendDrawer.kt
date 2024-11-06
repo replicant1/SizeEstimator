@@ -8,11 +8,11 @@ import com.example.sizeestimator.domain.MeasurementTrace
 class LegendDrawer : MTDrawer {
 
     companion object {
-        private const val LEGEND_MARGIN_PX = 10
-        private const val LEGEND_BOX_WIDTH_PX = 10
-        private const val LEGEND_ROW_HEIGHT_PX = 20
-        private const val LEGEND_BOX_TEXT_GAP_PX = 5
-        private const val LEGEND_TEXT_SIZE_PX = 14F
+         const val LEGEND_MARGIN_PX = 10
+         const val LEGEND_BOX_WIDTH_PX = 10
+         const val LEGEND_ROW_HEIGHT_PX = 20
+         const val LEGEND_BOX_TEXT_GAP_PX = 5
+         const val LEGEND_TEXT_SIZE_PX = 14F
     }
 
     /**
@@ -24,7 +24,7 @@ class LegendDrawer : MTDrawer {
 
         val legendPaint = Paint().apply {
             style = Paint.Style.FILL
-            strokeWidth = MTDrawer.BOX_STROKE_WIDTH_PX
+            strokeWidth = 1f
         }
 
         val textPaint = Paint().apply {

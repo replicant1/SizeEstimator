@@ -92,8 +92,9 @@ class MainViewModel : ViewModel() {
 
                 if (BuildConfig.DEBUG) {
                     // Save small image marked up with legend etc for debugging
-                    LegendDrawer().draw(loresBitmap, trace)
                     BoundingBoxesDrawer().draw(loresBitmap, trace)
+                    LegendDrawer().draw(loresBitmap, trace)
+
                     loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)
                 }
             } else {
