@@ -67,13 +67,14 @@ class BoundingBoxesDrawerTest {
 
     fun legendBoxMatches(bitmap: Bitmap, index: Int): Boolean {
         val color = MTDrawer.MARK_UP_COLORS[index]
-        val boxCenterX = LEGEND_MARGIN_PX1 + (LEGEND_BOX_WIDTH_PX / 2f)
-        val boxCenterY = LEGEND_MARGIN_PX1 + (index * LEGEND_ROW_HEIGHT_PX) + (LEGEND_BOX_WIDTH_PX / 2f)
+        val halfBox = (LEGEND_BOX_WIDTH_PX / 2f)
+        val boxCenterX = LEGEND_MARGIN_PX1 + halfBox
+        val boxCenterY = LEGEND_MARGIN_PX1 + (index * LEGEND_ROW_HEIGHT_PX) + halfBox
         return bitmap.pixelMatches(boxCenterX.toInt(), boxCenterY.toInt(), color)
     }
 }
 
-fun Color.legendBoxMatches(otherColor: Int) : Boolean {
+fun Color.matches(otherColor: Int) : Boolean {
     val colorToMatch = Color.valueOf(otherColor)
     val redMatch = colorToMatch.red() == red()
     val greenMatch = colorToMatch.green() == green()
@@ -83,5 +84,5 @@ fun Color.legendBoxMatches(otherColor: Int) : Boolean {
 
 fun Bitmap.pixelMatches(x : Int, y : Int, color: Int) : Boolean {
     val thisColor : Color = this.getColor(x, y)
-    return thisColor.legendBoxMatches(color)
+    return thisColor.matches(color)
 }
