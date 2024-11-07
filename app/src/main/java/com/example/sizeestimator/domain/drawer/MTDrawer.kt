@@ -1,8 +1,8 @@
-package com.example.sizeestimator.data
+package com.example.sizeestimator.domain.drawer
 
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
 
 /**
  * Something that knows how to draw some aspect of a [MeasurementTrace] data set into a [LoresBitmap]

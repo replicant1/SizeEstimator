@@ -1,9 +1,9 @@
-package com.example.sizeestimator.data
+package com.example.sizeestimator.domain.drawer
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
 
 class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle) : MTDrawer {
     enum class BoundingBoxStyle {

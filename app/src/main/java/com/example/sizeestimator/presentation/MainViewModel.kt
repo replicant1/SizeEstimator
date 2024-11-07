@@ -7,11 +7,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.BuildConfig
-import com.example.sizeestimator.data.BoundingBoxesDrawer
-import com.example.sizeestimator.data.BoundingBoxesDrawer.BoundingBoxStyle.OUTLINE
-import com.example.sizeestimator.data.LegendDrawer
-import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.save
+import com.example.sizeestimator.domain.drawer.BoundingBoxesDrawer
+import com.example.sizeestimator.domain.drawer.BoundingBoxesDrawer.BoundingBoxStyle.OUTLINE
+import com.example.sizeestimator.domain.drawer.LegendDrawer
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
+import com.example.sizeestimator.domain.bitmap.save
 import com.example.sizeestimator.domain.MeasurementEngine
 import com.example.sizeestimator.domain.MeasurementTrace
 import dagger.hilt.android.lifecycle.HiltViewModel

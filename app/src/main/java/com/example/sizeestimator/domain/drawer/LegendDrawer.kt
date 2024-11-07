@@ -1,9 +1,10 @@
-package com.example.sizeestimator.data
+package com.example.sizeestimator.domain.drawer
 
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
 
 class LegendDrawer : MTDrawer {
 

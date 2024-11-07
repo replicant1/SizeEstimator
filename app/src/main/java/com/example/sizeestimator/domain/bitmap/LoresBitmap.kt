@@ -1,12 +1,8 @@
-package com.example.sizeestimator.data
+package com.example.sizeestimator.domain.bitmap
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.DashPathEffect
-import android.graphics.Paint
-import android.graphics.Typeface
+import com.example.sizeestimator.domain.drawer.MTDrawer
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.Scoreboard
 import com.example.sizeestimator.domain.toScoreboardItemList

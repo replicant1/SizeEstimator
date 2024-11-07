@@ -2,15 +2,14 @@ package com.example.sizeestimator
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.data.BoundingBoxesDrawer
-import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.boxMatches
-import com.example.sizeestimator.data.pixelMatches
+import com.example.sizeestimator.domain.drawer.BoundingBoxesDrawer
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
+import com.example.sizeestimator.domain.bitmap.boxMatches
+import com.example.sizeestimator.domain.bitmap.pixelMatches
 import com.example.sizeestimator.domain.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.Scoreboard
@@ -19,7 +18,6 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.InputStream
 
 @RunWith(AndroidJUnit4::class)
 class BoundingBoxesDrawerTest {

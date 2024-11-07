@@ -1,4 +1,4 @@
-package com.example.sizeestimator.data
+package com.example.sizeestimator.domain.bitmap
 
 import android.graphics.Bitmap
 import android.graphics.Color

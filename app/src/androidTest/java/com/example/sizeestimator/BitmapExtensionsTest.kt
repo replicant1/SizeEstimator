@@ -2,8 +2,8 @@ package com.example.sizeestimator
 
 import android.graphics.Bitmap
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.sizeestimator.data.LoresBitmap
-import com.example.sizeestimator.data.toSquare
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
+import com.example.sizeestimator.domain.bitmap.toSquare
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

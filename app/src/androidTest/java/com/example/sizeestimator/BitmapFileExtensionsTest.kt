@@ -4,8 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.data.save
-import org.junit.Assert
+import com.example.sizeestimator.domain.bitmap.save
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test

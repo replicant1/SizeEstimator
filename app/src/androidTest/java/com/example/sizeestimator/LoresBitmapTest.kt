@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.data.LoresBitmap
+import com.example.sizeestimator.domain.bitmap.LoresBitmap
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
