@@ -6,7 +6,7 @@ import android.graphics.Typeface
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.bitmap.LoresBitmap
 
-class LegendDrawer : MTDrawer {
+class LegendDrawer(override var next: MTDrawer?) : MTDrawer {
 
     companion object {
          const val LEGEND_MARGIN_PX = 10

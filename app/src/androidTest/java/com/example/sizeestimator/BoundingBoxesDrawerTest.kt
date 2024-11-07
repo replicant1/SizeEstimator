@@ -51,7 +51,7 @@ class BoundingBoxesDrawerTest {
         )
 
         // Draw the bounding boxes
-        BoundingBoxesDrawer(BoundingBoxesDrawer.BoundingBoxStyle.FILL).draw(lores, trace)
+        BoundingBoxesDrawer(BoundingBoxesDrawer.BoundingBoxStyle.FILL, null).draw(lores, trace)
 
         Assert.assertTrue(
             lores.squareBitmap.pixelMatches(150, 150, Color.Red.toArgb()))

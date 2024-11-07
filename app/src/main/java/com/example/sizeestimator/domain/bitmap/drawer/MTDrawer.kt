@@ -14,6 +14,14 @@ interface MTDrawer {
      */
     fun draw(bitmap: LoresBitmap, trace: MeasurementTrace)
 
+    /**
+     * The next MTDrawer object that will be given the chance to draw.
+     *
+     * @property next the next element in the chain of MTDrawer objects, or null if this is the
+     * last MTDrawer object in the chain.
+     */
+    val next: MTDrawer?
+
     companion object {
         const val BOX_STROKE_WIDTH_PX = 2F
         val MARK_UP_COLORS: List<Int> =

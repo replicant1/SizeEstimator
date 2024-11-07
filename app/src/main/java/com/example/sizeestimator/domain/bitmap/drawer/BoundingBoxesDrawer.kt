@@ -5,7 +5,7 @@ import android.graphics.Paint
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.bitmap.LoresBitmap
 
-class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle) : MTDrawer {
+class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle, override var next: MTDrawer?) : MTDrawer {
     enum class BoundingBoxStyle {
         FILL, OUTLINE;
     }

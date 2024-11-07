@@ -55,7 +55,7 @@ class LegendDrawerTest {
             targetObjectSizeMm = Pair(0, 0)
         )
 
-        LegendDrawer().draw(lores, trace)
+        LegendDrawer(null).draw(lores, trace)
 
         assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.width)
         assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.height)
