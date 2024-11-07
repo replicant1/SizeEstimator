@@ -1,5 +1,10 @@
 package com.example.sizeestimator.domain
 
+import com.example.sizeestimator.domain.scoreboard.processor.ObjectSizer
+import com.example.sizeestimator.domain.scoreboard.processor.ReferenceObjectFinder
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.processor.TargetObjectFinder
+
 class MeasurementEngine {
 
     data class MeasurementOptions(val minTop: Float)

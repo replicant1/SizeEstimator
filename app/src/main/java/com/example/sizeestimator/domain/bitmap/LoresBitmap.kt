@@ -2,10 +2,10 @@ package com.example.sizeestimator.domain.bitmap
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.example.sizeestimator.domain.drawer.MTDrawer
+import com.example.sizeestimator.domain.bitmap.drawer.MTDrawer
 import com.example.sizeestimator.domain.MeasurementTrace
-import com.example.sizeestimator.domain.Scoreboard
-import com.example.sizeestimator.domain.toScoreboardItemList
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.toScoreboardItemList
 import com.example.sizeestimator.ml.SsdMobilenetV1
 import org.tensorflow.lite.support.image.TensorImage
 import java.io.File

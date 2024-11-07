@@ -1,6 +1,8 @@
-package com.example.sizeestimator.domain
+package com.example.sizeestimator.domain.scoreboard.processor
 
 import com.example.sizeestimator.BuildConfig
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 
 /**
  * @property referenceObject as found with [ReferenceObjectFinder] amongst [Scoreboard]

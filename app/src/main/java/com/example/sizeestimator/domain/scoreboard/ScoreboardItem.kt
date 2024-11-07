@@ -1,4 +1,4 @@
-package com.example.sizeestimator.domain
+package com.example.sizeestimator.domain.scoreboard
 
 import android.graphics.RectF
 import com.example.sizeestimator.ml.SsdMobilenetV1

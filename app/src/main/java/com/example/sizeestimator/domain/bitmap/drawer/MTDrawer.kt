@@ -1,4 +1,4 @@
-package com.example.sizeestimator.domain.drawer
+package com.example.sizeestimator.domain.bitmap.drawer
 
 import android.graphics.Color
 import com.example.sizeestimator.domain.MeasurementTrace

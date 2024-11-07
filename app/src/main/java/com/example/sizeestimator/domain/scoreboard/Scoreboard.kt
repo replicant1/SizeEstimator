@@ -1,4 +1,4 @@
-package com.example.sizeestimator.domain
+package com.example.sizeestimator.domain.scoreboard
 
 /**
  * Convenience so sorting occurs only once and then is passed around immutably.

@@ -1,9 +1,9 @@
 package com.example.sizeestimator
 
-import com.example.sizeestimator.domain.BoundingBox
-import com.example.sizeestimator.domain.ObjectSizer
-import com.example.sizeestimator.domain.Scoreboard
-import com.example.sizeestimator.domain.ScoreboardItem
+import com.example.sizeestimator.domain.scoreboard.BoundingBox
+import com.example.sizeestimator.domain.scoreboard.processor.ObjectSizer
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNull
 import org.junit.Test

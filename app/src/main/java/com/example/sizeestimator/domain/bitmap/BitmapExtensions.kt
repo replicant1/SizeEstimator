@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.example.sizeestimator.domain.BoundingBox
+import com.example.sizeestimator.domain.scoreboard.BoundingBox
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream

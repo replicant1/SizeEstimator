@@ -6,14 +6,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.domain.drawer.BoundingBoxesDrawer
+import com.example.sizeestimator.domain.bitmap.drawer.BoundingBoxesDrawer
 import com.example.sizeestimator.domain.bitmap.LoresBitmap
 import com.example.sizeestimator.domain.bitmap.boxMatches
 import com.example.sizeestimator.domain.bitmap.pixelMatches
-import com.example.sizeestimator.domain.BoundingBox
+import com.example.sizeestimator.domain.scoreboard.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
-import com.example.sizeestimator.domain.Scoreboard
-import com.example.sizeestimator.domain.ScoreboardItem
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -56,7 +56,8 @@ class BoundingBoxesDrawerTest {
         Assert.assertTrue(
             lores.squareBitmap.pixelMatches(150, 150, Color.Red.toArgb()))
         Assert.assertTrue(
-            lores.squareBitmap.boxMatches(BoundingBox(top =10f, left = 10f, right = 50f, bottom = 50f),
+            lores.squareBitmap.boxMatches(
+                BoundingBox(top =10f, left = 10f, right = 50f, bottom = 50f),
             Color.Red.toArgb()))
     }
 }

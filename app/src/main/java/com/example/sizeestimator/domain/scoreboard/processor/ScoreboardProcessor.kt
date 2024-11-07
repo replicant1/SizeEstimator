@@ -1,4 +1,6 @@
-package com.example.sizeestimator.domain
+package com.example.sizeestimator.domain.scoreboard.processor
+
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
 
 interface ScoreboardProcessor<T> {
 

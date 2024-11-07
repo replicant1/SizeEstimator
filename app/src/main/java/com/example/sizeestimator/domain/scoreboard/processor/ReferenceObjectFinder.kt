@@ -1,4 +1,7 @@
-package com.example.sizeestimator.domain
+package com.example.sizeestimator.domain.scoreboard.processor
+
+import com.example.sizeestimator.domain.scoreboard.Scoreboard
+import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 
 /**
  * @property minTopPx Minimum vertical coordinate of the reference object's "top" coordinate.
