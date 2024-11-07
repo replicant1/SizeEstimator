@@ -30,6 +30,8 @@ class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle, override var 
             boxPaint.color = MTDrawer.MARK_UP_COLORS[index % MTDrawer.MARK_UP_COLORS.size]
             canvas.drawRect(item.location.toRectF(), boxPaint)
         }
+
+        next?.draw(bitmap, trace)
     }
 }
 

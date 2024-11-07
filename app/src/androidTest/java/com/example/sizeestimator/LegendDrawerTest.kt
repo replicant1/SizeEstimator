@@ -15,6 +15,7 @@ import com.example.sizeestimator.domain.scoreboard.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.scoreboard.Scoreboard
 import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -55,8 +56,18 @@ class LegendDrawerTest {
             targetObjectSizeMm = Pair(0, 0)
         )
 
-        LegendDrawer(null).draw(lores, trace)
+        var nextDrawMethodCalled = false
+        LegendDrawer(
+            object : MTDrawer {
+                override fun draw(bitmap: LoresBitmap, trace: MeasurementTrace) {
+                    nextDrawMethodCalled = true
+                }
 
+                override val next: MTDrawer? = null
+            }
+        ).draw(lores, trace)
+
+        assertTrue(nextDrawMethodCalled)
         assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.width)
         assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.height)
 

@@ -57,5 +57,7 @@ class LegendDrawer(override var next: MTDrawer?) : MTDrawer {
                 textPaint
             )
         }
+
+        next?.draw(lores, trace)
     }
 }

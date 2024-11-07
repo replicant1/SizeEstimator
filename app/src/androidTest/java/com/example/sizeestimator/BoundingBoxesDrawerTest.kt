@@ -12,6 +12,7 @@ import com.example.sizeestimator.domain.bitmap.boxMatches
 import com.example.sizeestimator.domain.bitmap.pixelMatches
 import com.example.sizeestimator.domain.scoreboard.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.bitmap.drawer.MTDrawer
 import com.example.sizeestimator.domain.scoreboard.Scoreboard
 import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 import org.junit.Assert
@@ -51,8 +52,18 @@ class BoundingBoxesDrawerTest {
         )
 
         // Draw the bounding boxes
-        BoundingBoxesDrawer(BoundingBoxesDrawer.BoundingBoxStyle.FILL, null).draw(lores, trace)
+        var nextDrawMethodCalled = false
+        BoundingBoxesDrawer(BoundingBoxesDrawer.BoundingBoxStyle.FILL,
+            object : MTDrawer {
+                override fun draw(bitmap: LoresBitmap, trace: MeasurementTrace) {
+                    nextDrawMethodCalled = true
+                }
 
+                override val next: MTDrawer? = null
+
+            }).draw(lores, trace)
+
+        Assert.assertTrue(nextDrawMethodCalled)
         Assert.assertTrue(
             lores.squareBitmap.pixelMatches(150, 150, Color.Red.toArgb()))
         Assert.assertTrue(
