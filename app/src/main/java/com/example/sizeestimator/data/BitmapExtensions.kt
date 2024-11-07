@@ -1,6 +1,10 @@
 package com.example.sizeestimator.data
 
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.example.sizeestimator.domain.BoundingBox
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -66,4 +70,31 @@ fun Bitmap.toSquare(side: Int): Bitmap {
     Timber.d("Scaled square bitmap has width = ${scaledSquareBitmap.width}, height = ${scaledSquareBitmap.height}")
 
     return scaledSquareBitmap
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+fun Bitmap.boxMatches(box : BoundingBox, color : Int) : Boolean {
+    for (x in box.left.toInt()..box.right.toInt()) {
+        for (y in box.top.toInt() .. box.bottom.toInt()) {
+            if (!this.pixelMatches(x, y, color)) {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun Color.matches(otherColor: Int) : Boolean {
+    val colorToMatch = Color.valueOf(otherColor)
+    val redMatch = colorToMatch.red() == red()
+    val greenMatch = colorToMatch.green() == green()
+    val blueMatch = colorToMatch.blue() == blue()
+    return redMatch && greenMatch && blueMatch
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+fun Bitmap.pixelMatches(x : Int, y : Int, color: Int) : Boolean {
+    val thisColor : Color = this.getColor(x, y)
+    return thisColor.matches(color)
 }
