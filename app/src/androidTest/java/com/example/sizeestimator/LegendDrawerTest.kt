@@ -13,6 +13,8 @@ import com.example.sizeestimator.domain.bitmap.drawer.MTDrawer
 import com.example.sizeestimator.domain.bitmap.pixelMatches
 import com.example.sizeestimator.domain.scoreboard.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
+import com.example.sizeestimator.domain.bitmap.drawer.MTDrawerConstants
+import com.example.sizeestimator.domain.bitmap.drawer.MTDrawerConstants.MARK_UP_COLORS
 import com.example.sizeestimator.domain.scoreboard.Scoreboard
 import com.example.sizeestimator.domain.scoreboard.ScoreboardItem
 import org.junit.Assert
@@ -79,7 +81,7 @@ class LegendDrawerTest {
     }
 
     private fun legendBoxMatches(bitmap: Bitmap, index: Int): Boolean {
-        val color = MTDrawer.MARK_UP_COLORS[index]
+        val color = MARK_UP_COLORS[index]
         val halfBox = (LEGEND_BOX_WIDTH_PX / 2f)
         val boxCenterX = LEGEND_MARGIN_PX + halfBox
         val boxCenterY = LEGEND_MARGIN_PX + (index * LEGEND_ROW_HEIGHT_PX) + halfBox

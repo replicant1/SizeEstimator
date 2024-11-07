@@ -31,11 +31,11 @@ class LegendDrawer(override var next: MTDrawer?) : MTDrawer {
         val textPaint = Paint().apply {
             textSize = LEGEND_TEXT_SIZE_PX
             typeface = Typeface.MONOSPACE
-            strokeWidth = MTDrawer.BOX_STROKE_WIDTH_PX
+            strokeWidth = MTDrawerConstants.BOX_STROKE_WIDTH_PX
         }
 
         trace.scoreboard.list.forEachIndexed { index, item ->
-            legendPaint.color = MTDrawer.MARK_UP_COLORS[index]
+            legendPaint.color = MTDrawerConstants.MARK_UP_COLORS[index]
 
             // Draw a filled square in the current item's colour
             canvas.drawRect(
@@ -49,7 +49,7 @@ class LegendDrawer(override var next: MTDrawer?) : MTDrawer {
             )
 
             // Draw the numerical score for current item
-            textPaint.color = MTDrawer.MARK_UP_COLORS[index]
+            textPaint.color = MTDrawerConstants.MARK_UP_COLORS[index]
             canvas.drawText(
                 item.score.toString(),
                 (LEGEND_MARGIN_PX + LEGEND_BOX_WIDTH_PX + LEGEND_BOX_TEXT_GAP_PX).toFloat(),

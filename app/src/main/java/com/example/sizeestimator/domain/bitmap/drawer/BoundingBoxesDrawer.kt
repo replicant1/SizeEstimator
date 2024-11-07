@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.bitmap.LoresBitmap
+import com.example.sizeestimator.domain.bitmap.drawer.MTDrawerConstants.MARK_UP_COLORS
 
 class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle, override var next: MTDrawer?) : MTDrawer {
     enum class BoundingBoxStyle {
@@ -22,12 +23,12 @@ class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle, override var 
                 BoundingBoxStyle.FILL -> Paint.Style.FILL
                 BoundingBoxStyle.OUTLINE -> Paint.Style.STROKE
             }
-            strokeWidth = MTDrawer.BOX_STROKE_WIDTH_PX
+            strokeWidth = MTDrawerConstants.BOX_STROKE_WIDTH_PX
             isAntiAlias = false
         }
 
         trace.scoreboard.list.forEachIndexed { index, item ->
-            boxPaint.color = MTDrawer.MARK_UP_COLORS[index % MTDrawer.MARK_UP_COLORS.size]
+            boxPaint.color = MARK_UP_COLORS[index % MARK_UP_COLORS.size]
             canvas.drawRect(item.location.toRectF(), boxPaint)
         }
 
