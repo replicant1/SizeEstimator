@@ -33,10 +33,8 @@ class BoundingBoxesDrawerTest {
 
     @Test
     fun loadAssetImageAndDrawBoxes() {
-        val fis: InputStream = context.assets.open(TestAssets.RAW_CAMERA_IMAGE)
-        val immutable = BitmapFactory.decodeStream(fis)
-        val mutable = immutable.copy(Bitmap.Config.ARGB_8888, true)
-        val lores = LoresBitmap.fromHiresBitmap(mutable)
+        // Create LoresBitma from empty bitmap - we won't be analysing it anyway.
+        val lores = LoresBitmap.fromHiresBitmap(Bitmap.createBitmap(400, 400, Bitmap.Config.RGB_565))
         val scoreboard = Scoreboard(
             mutableListOf(
                 ScoreboardItem(

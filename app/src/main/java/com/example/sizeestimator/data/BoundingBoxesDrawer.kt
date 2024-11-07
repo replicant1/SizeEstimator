@@ -3,7 +3,6 @@ package com.example.sizeestimator.data
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import com.example.sizeestimator.domain.BoundingBox
 import com.example.sizeestimator.domain.MeasurementTrace
 
 class BoundingBoxesDrawer(private val boxStyle : BoundingBoxStyle) : MTDrawer {

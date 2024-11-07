@@ -2,11 +2,8 @@ package com.example.sizeestimator
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.data.BoundingBoxesDrawer
-import com.example.sizeestimator.data.BoundingBoxesDrawer.BoundingBoxStyle.FILL
 import com.example.sizeestimator.data.LegendDrawer
 import com.example.sizeestimator.data.LegendDrawer.Companion.LEGEND_BOX_WIDTH_PX
 import com.example.sizeestimator.data.LegendDrawer.Companion.LEGEND_MARGIN_PX
@@ -15,18 +12,14 @@ import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.MTDrawer
 import com.example.sizeestimator.data.pixelMatches
 import com.example.sizeestimator.domain.BoundingBox
-import com.example.sizeestimator.domain.MeasurementEngine
+import com.example.sizeestimator.domain.MeasurementTrace
 import com.example.sizeestimator.domain.Scoreboard
 import com.example.sizeestimator.domain.ScoreboardItem
-import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.InputStream
 
 @RunWith(AndroidJUnit4::class)
 class LegendDrawerTest {
@@ -39,34 +32,39 @@ class LegendDrawerTest {
 
     @Test
     fun loadAssetImageAndDrawLegend() {
-        val fis: InputStream = context.assets.open(TestAssets.RAW_CAMERA_IMAGE)
-        val immutable = BitmapFactory.decodeStream(fis)
-        val mutable = immutable.copy(Bitmap.Config.ARGB_8888, true)
-        val lores = LoresBitmap.fromHiresBitmap(mutable)
-        val scoreboard = lores.score(context)
-        val trace = MeasurementEngine.measure(
-            scoreboard,
-            MeasurementEngine.MeasurementOptions(minTop = LoresBitmap.LORES_IMAGE_SIZE_PX / 2f)
+        // Create LoresBitmap from empty bitmap - we won't be analysing it anyway.
+        val lores =
+            LoresBitmap.fromHiresBitmap(Bitmap.createBitmap(400, 400, Bitmap.Config.RGB_565))
+        val scoreboard = Scoreboard(
+            mutableListOf(
+                ScoreboardItem(
+                    score = 10f,
+                    location = BoundingBox(top = 100f, left = 100f, right = 120f, bottom = 145f)
+                ),
+                ScoreboardItem(
+                    score = 9f,
+                    location = BoundingBox(top = 100f, left=100f, right = 120f, bottom = 130f)
+                )
+            )
         )
-        if (trace != null) {
-            assertNotNull(trace)
-            assertNotNull(trace.referenceObject)
-            assertNotNull(trace.targetObject)
-            assertNotNull(trace.targetObjectSizeMm)
-            assertNotNull(trace.scoreboard)
 
-            LegendDrawer().draw(lores, trace)
-            assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.width)
-            assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.height)
+        val trace = MeasurementTrace(
+            scoreboard = scoreboard,
+            referenceObject = scoreboard.list.first(),
+            targetObject = scoreboard.list.first(),
+            targetObjectSizeMm = Pair(0, 0)
+        )
 
-            assertFalse(immutable.sameAs(lores.squareBitmap))
+        LegendDrawer().draw(lores, trace)
 
-            // Test the first box in the legend is drawn at expected location
-            assertTrue(legendBoxMatches(lores.squareBitmap, 0))
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.width)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, lores.squareBitmap.height)
 
-            // Test the last box in the legend is drawn at expected location
-            assertTrue(legendBoxMatches(lores.squareBitmap, MTDrawer.MARK_UP_COLORS.lastIndex))
-        }
+        // Test the first box in the legend is drawn at expected location
+        assertTrue(legendBoxMatches(lores.squareBitmap, 0))
+
+        // Test the last box in the legend is drawn at expected location
+        assertTrue(legendBoxMatches(lores.squareBitmap, 1))
     }
 
     private fun legendBoxMatches(bitmap: Bitmap, index: Int): Boolean {
