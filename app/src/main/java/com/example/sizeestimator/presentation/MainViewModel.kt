@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sizeestimator.BuildConfig
 import com.example.sizeestimator.data.BoundingBoxesDrawer
+import com.example.sizeestimator.data.BoundingBoxesDrawer.BoundingBoxStyle.OUTLINE
 import com.example.sizeestimator.data.LegendDrawer
 import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.save
@@ -92,7 +93,7 @@ class MainViewModel : ViewModel() {
 
                 if (BuildConfig.DEBUG) {
                     // Save small image marked up with legend etc for debugging
-                    BoundingBoxesDrawer().draw(loresBitmap, trace)
+                    BoundingBoxesDrawer(OUTLINE).draw(loresBitmap, trace)
                     LegendDrawer().draw(loresBitmap, trace)
 
                     loresBitmap.save(context.cacheDir, LORES_MARKED_UP_FILENAME)

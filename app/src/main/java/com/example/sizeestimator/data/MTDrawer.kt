@@ -15,7 +15,6 @@ interface MTDrawer {
     fun draw(bitmap: LoresBitmap, trace: MeasurementTrace)
 
     companion object {
-        val BOX_STROKE_EFFECT = DashPathEffect(floatArrayOf(1F, 1F), 1F)
         const val BOX_STROKE_WIDTH_PX = 2F
         val MARK_UP_COLORS: List<Int> =
             listOf(

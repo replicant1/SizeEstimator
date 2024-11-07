@@ -1,18 +1,12 @@
 package com.example.sizeestimator
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.os.Environment
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.example.sizeestimator.data.save
+import com.example.sizeestimator.data.LoresBitmap
 import com.example.sizeestimator.data.toSquare
-
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import org.junit.Assert.*
-import org.junit.Before
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -34,8 +28,8 @@ class BitmapExtensionsTest {
     fun landscapeToLargerSquare() {
         val landscape = Bitmap.createBitmap(200, 100, Bitmap.Config.RGB_565)
         val square = landscape.toSquare(300)
-        assertEquals(300, square.width)
-        assertEquals(300, square.height)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, square.width)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, square.height)
     }
 
     @Test
@@ -49,10 +43,8 @@ class BitmapExtensionsTest {
     @Test
     fun portraitToLargerSquare() {
         val portrait = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565)
-        val square = portrait.toSquare(300)
-        assertEquals(300, square.width)
-        assertEquals(300, square.height)
+        val square = portrait.toSquare(LoresBitmap.LORES_IMAGE_SIZE_PX)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, square.width)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, square.height)
     }
-
-
 }

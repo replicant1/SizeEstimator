@@ -35,14 +35,14 @@ class LoresBitmapTest {
         val input = BitmapFactory.decodeFile(path)
 
         // Check that "test.jpg" is 300x300
-        assertEquals(300, input.width)
-        assertEquals(300, input.height)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, input.width)
+        assertEquals(LoresBitmap.LORES_IMAGE_SIZE_PX, input.height)
     }
 
     @Test
     fun scaledDownAssetImageAndScoreWithTensorFlowModel() {
         // Load "hires.jpg" from assets folder
-        val fis: InputStream = context.assets.open("hires.jpg")
+        val fis: InputStream = context.assets.open(TestAssets.RAW_CAMERA_IMAGE)
         val hiresBitmap = BitmapFactory.decodeStream(fis)
         assertEquals(4080, hiresBitmap.width)
         assertEquals(3072, hiresBitmap.height)

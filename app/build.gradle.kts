@@ -96,5 +96,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+//    androidTestImplementation("io.mockk:mockk:1.12.8")
+
 
 }
